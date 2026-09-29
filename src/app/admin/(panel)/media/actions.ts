@@ -55,8 +55,8 @@ export async function deleteMedia(id: string): Promise<{ ok: boolean; message?: 
   if (!isUuid(id)) return { ok: false, message: "Invalid id." };
   const uses = await mediaUsage(id);
   if (uses.length) return { ok: false, message: `This image is still used by: ${uses.join(", ")}. Remove it there first.` };
-  const [row] = await db.delete(media).where(eq(media.id, id)).returning({ storageKey: media.storageKey, originalName: media.originalName });
-  if (row) await deleteStoredFile(row.storageKey);
+  const [row] = await db.delete(media).where(eq(media.id, id)).returning({ storageKey: media.storageKey, url: media.url, originalName: media.originalName });
+  if (row) await deleteStoredFile(row.storageKey, row.url);
   await audit({ userId: user.id, action: "media.delete", entityType: "media", entityId: id, summary: `Deleted ${row?.originalName ?? id}` });
   revalidatePublicContent();
   revalidatePath("/admin/media");

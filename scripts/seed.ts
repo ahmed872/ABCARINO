@@ -77,7 +77,8 @@ async function main() {
   }
 
   console.log(`Seeded ${catIds.size} categories, ${solIds.size} solutions, ${seedPackages.length} packages (existing rows untouched).`);
-  await ensureSuperAdmin();
+  if (process.env.ADMIN_EMAIL) await ensureSuperAdmin();
+  else console.warn("ADMIN_EMAIL is not set — skipping admin creation. Set it and run `npm run admin:create`.");
 }
 
 main()

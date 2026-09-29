@@ -6,11 +6,40 @@ import { cn } from "@/lib/utils";
 
 export type MediaItem = { id: string; url: string; width: number; height: number; altEn: string; originalName?: string };
 
-async function uploadFile(file: File): Promise<MediaItem> {
+/** Hosting platforms cap request bodies (Vercel: 4.5 MB). */
+const UPLOAD_TARGET_BYTES = 3.5 * 1024 * 1024;
+
+/**
+ * Downscale very large photos in the browser before upload. The server re-encodes
+ * everything to WebP at ≤2400px anyway, so this loses nothing visible.
+ */
+async function prepareForUpload(file: File): Promise<File> {
+  if (file.size <= UPLOAD_TARGET_BYTES || file.type === "image/gif" || !file.type.startsWith("image/")) return file;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, 2400 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    for (const quality of [0.92, 0.85, 0.75]) {
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      if (blob && blob.size <= UPLOAD_TARGET_BYTES) return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+    }
+  } catch {
+    /* fall back to the original file; the server reports if it is too large */
+  }
+  return file;
+}
+
+async function uploadFile(original: File): Promise<MediaItem> {
+  const file = await prepareForUpload(original);
   const fd = new FormData();
   fd.append("file", file);
   const res = await fetch("/api/admin/media", { method: "POST", body: fd, credentials: "same-origin" });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 413) throw new Error(data.error ?? "The file is too large for the server. Try a smaller image.");
   if (!res.ok) throw new Error(data.error ?? "Upload failed");
   return data.item as MediaItem;
 }

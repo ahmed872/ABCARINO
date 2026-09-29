@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isLocale, LOCALE_COOKIE, negotiateLocale } from "@/lib/i18n/config";
 import { sessionCookieName } from "@/lib/auth/cookie";
+import { isHttpsProduction } from "@/lib/site-url";
 
 /**
  * Runs before routing:
@@ -18,7 +19,8 @@ function buildCsp(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
     // Inline style attributes are used by React/SVG; scripts remain nonce-locked.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
+    // Uploaded media may live on Vercel Blob when BLOB_READ_WRITE_TOKEN is configured.
+    "img-src 'self' blob: data: https://*.public.blob.vercel-storage.com",
     "font-src 'self'",
     "connect-src 'self'",
     "media-src 'self'",
@@ -27,9 +29,7 @@ function buildCsp(nonce: string): string {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(process.env.NODE_ENV === "production" && (process.env.APP_URL ?? "").startsWith("https://")
-      ? ["upgrade-insecure-requests"]
-      : []),
+    ...(isHttpsProduction() ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
 }
 

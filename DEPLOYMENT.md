@@ -2,7 +2,25 @@
 
 The recommended setup for a small team is **one VPS with Docker Compose**: the app, PostgreSQL and a persistent volume for uploaded media, behind a TLS reverse proxy. Any provider works (Hetzner, DigitalOcean, AWS Lightsail…); 2 vCPU / 2–4 GB RAM is plenty.
 
-## 1. Prepare the server
+## Deploying on Vercel
+
+The site needs a **PostgreSQL database** and, for uploaded images, **Vercel Blob** (Vercel's disk is not persistent). Without a database every page fails with a server error.
+
+1. **Database** — Vercel → your project → **Storage** → *Create / Connect Database* → **Neon (Postgres)**. This adds `DATABASE_URL` automatically. (Supabase or any Postgres works too: paste its connection string as `DATABASE_URL`.)
+2. **Images** — Storage → *Create* → **Blob**. This adds `BLOB_READ_WRITE_TOKEN`.
+3. **Environment variables** (Settings → Environment Variables, for *Production* and *Preview*):
+   - `APP_SECRET` — a long random string (`openssl rand -base64 48`)
+   - `ADMIN_EMAIL` — the first admin's email
+   - `ADMIN_PASSWORD` — optional; if empty, a password is generated and printed once in the **build log**
+   - `APP_URL` — optional; your custom domain (e.g. `https://abcarino.com`). Defaults to the Vercel production domain.
+4. **Redeploy** (Deployments → ⋯ → Redeploy). The `vercel-build` script runs migrations and the idempotent seed before building, so the database is always up to date. If `DATABASE_URL` is missing the build fails with a clear message instead of publishing a broken site.
+5. Sign in at `/admin` and follow the first sign-in checklist below.
+
+Notes: uploads larger than ~3.5 MB are downscaled in the browser before upload (Vercel limits request bodies to 4.5 MB); the rate limiter is per server instance on serverless.
+
+## Deploying on a VPS with Docker (recommended for full control)
+
+### 1. Prepare the server
 
 ```bash
 # Ubuntu 24.04 example
@@ -10,7 +28,7 @@ curl -fsSL https://get.docker.com | sh
 git clone <your-repo-url> abcarino && cd abcarino
 ```
 
-## 2. Configure environment
+### 2. Configure environment
 
 Create `.env` next to `docker-compose.yml`:
 
@@ -25,7 +43,7 @@ ADMIN_PASSWORD=                                # leave empty to generate one
 
 Never commit `.env`. Secrets are only read on the server; nothing secret is exposed to the browser.
 
-## 3. Build, migrate, seed, create the admin
+### 3. Build, migrate, seed, create the admin
 
 ```bash
 docker compose build
@@ -37,7 +55,7 @@ docker compose up -d web
 
 On every later start the container applies pending migrations automatically before serving.
 
-## 4. TLS reverse proxy
+### 4. TLS reverse proxy
 
 The app listens on `127.0.0.1:3000`. Put Caddy (automatic HTTPS) or nginx in front. **The proxy must overwrite `X-Real-IP`** — rate limiting relies on it (`TRUST_PROXY=true` is set in compose).
 
@@ -67,7 +85,7 @@ location / {
 
 With `APP_URL` on `https://`, the app automatically enables HSTS, `upgrade-insecure-requests` and the `__Host-` secure session cookie.
 
-## 5. First sign-in checklist
+## First sign-in checklist
 
 1. Open `https://abcarino.com/admin` and sign in.
 2. **My account** → change the generated password.
@@ -100,7 +118,7 @@ docker compose build web && docker compose up -d web   # migrations run automati
 ## Scaling notes
 
 - The app is stateless except for **uploaded media** (volume `media`) and the **in-memory rate limiter**. For more than one instance: move media to S3/R2 (implement `src/lib/storage.ts` against the bucket) and the rate limiter to Redis/Postgres (same interface in `src/lib/security/rate-limit.ts`).
-- Serverless hosts (e.g. Vercel) need the S3 storage change first — their filesystem is not persistent.
+- On Vercel, media goes to Vercel Blob automatically when `BLOB_READ_WRITE_TOKEN` is set.
 - Scheduled articles use server time; the image sets `TZ=Africa/Cairo`.
 
 ## Operations

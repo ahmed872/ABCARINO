@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { del, put } from "@vercel/blob";
 import sharp, { type Metadata as SharpMetadata } from "sharp";
 
 /**
@@ -12,12 +13,19 @@ import sharp, { type Metadata as SharpMetadata } from "sharp";
  * and (4) removes any embedded payloads. The stored name is random, so user input
  * never touches the file system path.
  *
- * To move to S3/R2 later, implement the same three functions against the bucket.
+ * Two backends, chosen automatically:
+ *  - Vercel Blob when BLOB_READ_WRITE_TOKEN is set (required on Vercel/serverless,
+ *    whose filesystem is not persistent);
+ *  - local disk (STORAGE_DIR) otherwise — e.g. Docker with a volume.
  */
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 const MAX_DIMENSION = 2400;
 const ALLOWED_FORMATS = new Set(["jpeg", "png", "webp", "avif", "gif", "heif", "tiff"]);
 export const STORAGE_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/;
+
+export function usesBlobStorage(): boolean {
+  return !!process.env.BLOB_READ_WRITE_TOKEN;
+}
 
 function mediaDir(): string {
   return path.resolve(process.env.STORAGE_DIR ?? "./storage", "media");
@@ -55,12 +63,24 @@ export async function storeImage(input: Buffer): Promise<StoredImage> {
     .toBuffer({ resolveWithObject: true });
 
   const storageKey = `${randomUUID()}.webp`;
-  await mkdir(mediaDir(), { recursive: true });
-  await writeFile(path.join(mediaDir(), storageKey), data, { mode: 0o644 });
+  let url: string;
+  if (usesBlobStorage()) {
+    const blob = await put(`media/${storageKey}`, data, {
+      access: "public",
+      contentType: "image/webp",
+      addRandomSuffix: false,
+      cacheControlMaxAge: 60 * 60 * 24 * 365,
+    });
+    url = blob.url;
+  } else {
+    await mkdir(mediaDir(), { recursive: true });
+    await writeFile(path.join(mediaDir(), storageKey), data, { mode: 0o644 });
+    url = `/media/${storageKey}`;
+  }
 
   return {
     storageKey,
-    url: `/media/${storageKey}`,
+    url,
     mimeType: "image/webp",
     sizeBytes: data.byteLength,
     width: info.width,
@@ -80,8 +100,12 @@ export async function readStoredFile(storageKey: string): Promise<{ data: Buffer
   }
 }
 
-export async function deleteStoredFile(storageKey: string): Promise<void> {
+export async function deleteStoredFile(storageKey: string, url?: string): Promise<void> {
   if (!STORAGE_KEY_PATTERN.test(storageKey)) return;
+  if (url && /^https:\/\/[^/]+\.public\.blob\.vercel-storage\.com\//.test(url)) {
+    await del(url).catch((err) => console.error("[storage] blob delete failed", err));
+    return;
+  }
   try {
     await unlink(path.join(mediaDir(), storageKey));
   } catch {

@@ -13,8 +13,12 @@ function createClient() {
   if (!url) {
     throw new Error("DATABASE_URL is not set. Copy .env.example to .env and configure it.");
   }
+  // Transaction-mode poolers (PgBouncer, Supabase :6543, Neon "-pooler") don't support prepared statements.
+  const pooled = /pgbouncer=true|:6543\/|-pooler\./.test(url) || process.env.DATABASE_PREPARE === "false";
   return postgres(url, {
-    max: Number(process.env.DATABASE_POOL_SIZE ?? 10),
+    // Serverless instances each hold their own pool: keep it small there.
+    max: Number(process.env.DATABASE_POOL_SIZE ?? (process.env.VERCEL ? 3 : 10)),
+    prepare: !pooled,
     idle_timeout: 30,
     connect_timeout: 10,
     onnotice: () => {},
