@@ -106,7 +106,7 @@ docker compose exec -T db pg_dump -U abcarino abcarino | gzip > backup-$(date +%
 docker run --rm -v abcarino_media:/data -v "$PWD":/backup alpine tar czf /backup/media-$(date +%F).tgz -C /data .
 ```
 
-**After restoring a database backup, restart the web container** (`docker compose restart web` after deleting `.next/cache/fetch-cache` inside it, or simply `docker compose up -d --force-recreate web`): published content is cached on disk for speed and is only invalidated by admin edits.
+**After restoring a database backup, restart the web container** (`docker compose restart web`): published content is cached in memory for speed and only admin edits invalidate it; a restart always starts with an empty cache.
 
 ## Updating
 

@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 import { isHttpsProduction } from "./src/lib/site-url";
 
@@ -12,6 +13,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Self-hosted: in-memory data cache so restarts never resurrect stale content (see cache-handler.cjs).
+  ...(process.env.VERCEL ? {} : { cacheHandler: path.join(process.cwd(), "cache-handler.cjs"), cacheMaxMemorySize: 0 }),
   poweredByHeader: false,
   reactStrictMode: true,
   experimental: {

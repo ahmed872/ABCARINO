@@ -49,12 +49,13 @@ export type ActionResponse = {
 export async function callAction(
   name: string,
   args: unknown[],
-  opts: { cookie?: string; origin?: string | null; path?: string; headers?: Record<string, string> } = {},
+  opts: { cookie?: string; origin?: string | null; path?: string; headers?: Record<string, string>; base?: string } = {},
 ): Promise<ActionResponse> {
   const { id, path } = findAction(name);
   const encoded = await encodeReply(args);
   const headers: Record<string, string> = { "Next-Action": id, Accept: "text/x-component" };
-  if (opts.origin !== null) headers.Origin = opts.origin ?? BASE_URL;
+  const base = opts.base ?? BASE_URL;
+  if (opts.origin !== null) headers.Origin = opts.origin ?? base;
   if (opts.cookie) headers.Cookie = opts.cookie;
   Object.assign(headers, opts.headers ?? {});
   let body: string | FormData;
@@ -64,7 +65,7 @@ export async function callAction(
   } else {
     body = encoded;
   }
-  const res = await fetch(BASE_URL + (opts.path ?? path), { method: "POST", headers, body, redirect: "manual" });
+  const res = await fetch(base + (opts.path ?? path), { method: "POST", headers, body, redirect: "manual" });
   const text = await res.text();
   const row = text.split("\n").find((l) => l.startsWith("1:"));
   let result: unknown = undefined;
