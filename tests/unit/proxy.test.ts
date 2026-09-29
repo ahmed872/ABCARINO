@@ -45,3 +45,12 @@ describe("proxy (runs before every page)", () => {
     expect(run("http://localhost/admin/login").headers.get("x-robots-tag")).toBe("noindex, nofollow");
   });
 });
+
+describe("CSP image sources", () => {
+  it("only allows Vercel Blob images when a Blob store is configured", () => {
+    vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
+    expect(run("http://localhost/en").headers.get("content-security-policy")).toContain("img-src 'self' blob: data:;");
+    vi.stubEnv("BLOB_READ_WRITE_TOKEN", "vercel_blob_rw_test");
+    expect(run("http://localhost/en").headers.get("content-security-policy")).toContain("https://*.public.blob.vercel-storage.com");
+  });
+});

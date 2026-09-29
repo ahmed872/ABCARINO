@@ -19,8 +19,8 @@ function buildCsp(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
     // Inline style attributes are used by React/SVG; scripts remain nonce-locked.
     "style-src 'self' 'unsafe-inline'",
-    // Uploaded media may live on Vercel Blob when BLOB_READ_WRITE_TOKEN is configured.
-    "img-src 'self' blob: data: https://*.public.blob.vercel-storage.com",
+    // Uploaded media lives on Vercel Blob only when a Blob store is configured.
+    `img-src 'self' blob: data:${process.env.BLOB_READ_WRITE_TOKEN ? " https://*.public.blob.vercel-storage.com" : ""}`,
     "font-src 'self'",
     "connect-src 'self'",
     "media-src 'self'",

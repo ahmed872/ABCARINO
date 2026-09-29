@@ -34,8 +34,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const settings = await getSettings();
   const favicon = settings.general.faviconMediaId ? await getMedia(settings.general.faviconMediaId) : null;
   const ogImage = settings.seo.ogImageMediaId ? await getMedia(settings.seo.ogImageMediaId) : null;
+  // Site-wide defaults only. Canonical, hreflang and robots are page-specific (every page
+  // sets them); inheriting the home page's values here gave 404s a canonical to "/".
+  const { alternates: _alternates, robots: _robots, ...defaults } = buildMetadata({ locale, settings, path: "/", image: ogImage });
+  void _alternates;
+  void _robots;
   return {
-    ...buildMetadata({ locale, settings, path: "/", image: ogImage }),
+    ...defaults,
     applicationName: "ABCARINO",
     icons: {
       icon: favicon ? [{ url: favicon.url }] : [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
