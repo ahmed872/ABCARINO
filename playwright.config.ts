@@ -8,7 +8,7 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://localhost:${PORT}`;
 
 export const e2eEnv = {
-  DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgres://abcarino:abcarino@localhost:5432/abcarino_test",
+  DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgres://abcarino:abcarino@localhost:5432/abcarino_e2e",
   APP_URL: baseURL,
   APP_SECRET: "e2e-only-secret-value-that-is-long-enough-123456",
   STORAGE_DIR: "./.e2e-storage",
@@ -16,6 +16,8 @@ export const e2eEnv = {
   ADMIN_NAME: "E2E Admin",
   ADMIN_PASSWORD: "E2e-Strong-Lamp-Orbit-42",
   TRUST_PROXY: "false",
+  // Short lockout window so tests can observe lock expiry (production default: 15 minutes).
+  AUTH_LOCKOUT_MINUTES: "0.05",
 };
 
 export default defineConfig({

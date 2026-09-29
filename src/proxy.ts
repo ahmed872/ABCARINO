@@ -65,6 +65,11 @@ export function proxy(request: NextRequest) {
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
+  // Decided at runtime (not in next.config, whose headers are frozen at build time,
+  // when APP_URL is typically unknown — e.g. Docker builds).
+  if (isHttpsProduction()) {
+    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  }
   if (first === "admin") {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
     response.headers.set("Cache-Control", "no-store");

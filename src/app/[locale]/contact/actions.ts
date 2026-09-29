@@ -13,6 +13,7 @@ export type ContactState = {
 };
 
 export async function submitLead(_prev: ContactState, formData: FormData): Promise<ContactState> {
+  if (!(formData instanceof FormData)) return { status: "error", error: "generic" };
   // Honeypot + minimum fill time: silently accept bots without storing anything.
   if (String(formData.get("company_website") ?? "") !== "") return { status: "success" };
   const startedAt = Number(formData.get("started_at") ?? 0);

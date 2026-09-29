@@ -45,3 +45,41 @@ function sweep(now: number) {
     }
   }
 }
+
+/**
+ * Failure-based lock: after `max` failures within `windowMs`, the key is locked
+ * for `windowMs` from the last failure. Used per email for login — for existing
+ * AND unknown emails alike, so lock behaviour never reveals whether an account exists.
+ */
+type FailureState = { count: number; last: number; lockedUntil: number };
+const failures = new Map<string, FailureState>();
+
+export function failureLockRemaining(key: string): number {
+  const s = failures.get(key);
+  if (!s) return 0;
+  const now = Date.now();
+  if (s.lockedUntil > now) return Math.ceil((s.lockedUntil - now) / 1000);
+  return 0;
+}
+
+/** Records a failure; returns true when this failure triggers (or extends) a lock. */
+export function registerFailure(key: string, max: number, windowMs: number): boolean {
+  const now = Date.now();
+  const s = failures.get(key);
+  const state: FailureState = s && now - s.last < windowMs && s.lockedUntil <= now ? s : { count: 0, last: now, lockedUntil: 0 };
+  state.count += 1;
+  state.last = now;
+  if (state.count >= max) {
+    state.lockedUntil = now + windowMs;
+    state.count = 0;
+  }
+  failures.set(key, state);
+  if (failures.size > 50_000) {
+    for (const [k, v] of failures) if (v.lockedUntil < now && now - v.last > windowMs) failures.delete(k);
+  }
+  return state.lockedUntil > now;
+}
+
+export function clearFailures(key: string) {
+  failures.delete(key);
+}

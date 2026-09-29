@@ -43,18 +43,20 @@ export type ActionResponse = {
   /** True when the server reported an error instead of a return value. */
   errored: boolean;
   redirect: string | null;
+  setCookies: string[];
 };
 
 export async function callAction(
   name: string,
   args: unknown[],
-  opts: { cookie?: string; origin?: string | null; path?: string } = {},
+  opts: { cookie?: string; origin?: string | null; path?: string; headers?: Record<string, string> } = {},
 ): Promise<ActionResponse> {
   const { id, path } = findAction(name);
   const encoded = await encodeReply(args);
   const headers: Record<string, string> = { "Next-Action": id, Accept: "text/x-component" };
   if (opts.origin !== null) headers.Origin = opts.origin ?? BASE_URL;
   if (opts.cookie) headers.Cookie = opts.cookie;
+  Object.assign(headers, opts.headers ?? {});
   let body: string | FormData;
   if (typeof encoded === "string") {
     headers["Content-Type"] = "text/plain;charset=UTF-8";
@@ -76,7 +78,7 @@ export async function callAction(
   } else if (row?.startsWith("1:E")) {
     errored = true;
   }
-  return { status: res.status, body: text, result, errored, redirect: res.headers.get("x-action-redirect") ?? res.headers.get("location") };
+  return { status: res.status, body: text, result, errored, redirect: res.headers.get("x-action-redirect") ?? res.headers.get("location"), setCookies: res.headers.getSetCookie() };
 }
 
 /** Build a FormData from a plain object (arrays become repeated fields). */
