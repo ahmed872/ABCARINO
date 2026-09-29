@@ -384,3 +384,12 @@ test.describe("concurrency", () => {
     expect(await sql`select 1 from leads where name=${name}`).toHaveLength(2);
   });
 });
+
+/* ───────────────────────────────── server-side request surface */
+test("image optimizer only fetches the site's own media (no SSRF / open proxy)", async () => {
+  const enc = encodeURIComponent;
+  for (const url of ["http://169.254.169.254/latest/meta-data/", "http://localhost:5432/", "/admin/users", "/api/admin/leads/export", "https://evil.example/x.png", "//evil.example/x.png", "https://attacker.public.blob.vercel-storage.com/media/x.png"]) {
+    expect((await fetch(`${BASE_URL}/_next/image?url=${enc(url)}&w=640&q=75`)).status, url).toBe(400);
+  }
+  expect((await fetch(`${BASE_URL}/_next/image?url=${enc("/brand/icon-192.png")}&w=640&q=75`)).status).toBe(200);
+});
