@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { submitLead, type ContactState } from "./actions";
@@ -19,8 +19,11 @@ export function ContactForm({
   defaultTopic?: string;
 }) {
   const [state, action, pending] = useActionState<ContactState, FormData>(submitLead, { status: "idle" });
-  const [startedAt] = useState(() => Date.now());
-  const [formKey, setFormKey] = useState(0);
+  // Set after mount (not during render) so server and client markup match.
+  const startedRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (startedRef.current) startedRef.current.value = String(Date.now());
+  }, []);
   const f = state.fields ?? {};
 
   if (state.status === "success") {
@@ -31,10 +34,7 @@ export function ContactForm({
         <p className="mt-3 text-paper/65">{t.success}</p>
         <button
           type="button"
-          onClick={() => {
-            setFormKey((k) => k + 1);
-            window.location.reload();
-          }}
+          onClick={() => window.location.reload()}
           className="mt-8 text-sm font-medium text-paper underline underline-offset-4"
         >
           {t.another}
@@ -48,10 +48,10 @@ export function ContactForm({
   const bad = "border-signal";
 
   return (
-    <form key={formKey} action={action} noValidate className="space-y-6" aria-describedby="form-status">
+    <form action={action} noValidate className="space-y-6" aria-describedby="form-status">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="sourcePath" value={`/${locale}/contact`} />
-      <input type="hidden" name="started_at" value={startedAt} />
+      <input ref={startedRef} type="hidden" name="started_at" defaultValue="0" />
       <div aria-hidden className="absolute -start-[9999px] h-0 w-0 overflow-hidden">
         <label>
           Company website
@@ -107,7 +107,8 @@ export function ContactForm({
         <label htmlFor="c-topic" className="text-sm font-medium text-ink">
           {t.fields.projectType}
         </label>
-        <select id="c-topic" name="projectType" defaultValue={defaultTopic ?? ""} className={cn(field, ok, "appearance-none")}>
+        <div className="relative">
+        <select id="c-topic" name="projectType" defaultValue={defaultTopic ?? ""} className={cn(field, ok, "appearance-none pe-10")}>
           <option value="">{t.projectPlaceholder}</option>
           {topics.map((o) => (
             <option key={o.value} value={o.value}>
@@ -116,6 +117,10 @@ export function ContactForm({
           ))}
           <option value="other">{t.projectOther}</option>
         </select>
+          <svg aria-hidden viewBox="0 0 24 24" className="pointer-events-none absolute end-4 top-1/2 mt-1 h-4 w-4 -translate-y-1/2 text-stone" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
       </div>
 
       <div>

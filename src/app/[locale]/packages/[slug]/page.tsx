@@ -96,7 +96,7 @@ export default async function PackagePage({ params }: { params: Params }) {
               {ctaLabel}
             </Button>
           ) : (
-            <Button href={`/${locale}/contact?topic=${pkg.slug}`} variant="signal" size="lg">
+            <Button href={`/${locale}/contact?topic=package:${pkg.slug}`} variant="signal" size="lg">
               {ctaLabel}
             </Button>
           )}
@@ -191,7 +191,7 @@ export default async function PackagePage({ params }: { params: Params }) {
           </div>
         </section>
       ) : null}
-      <CtaBand locale={locale} t={t} settings={settings} whatsappContext={name} contactQuery={`?topic=${pkg.slug}`} />
+      <CtaBand locale={locale} t={t} settings={settings} whatsappContext={name} contactQuery={`?topic=package:${pkg.slug}`} />
     </>
   );
 }

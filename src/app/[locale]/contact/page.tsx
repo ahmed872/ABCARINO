@@ -31,7 +31,7 @@ export default async function ContactPage({
 
   const topics = [
     ...solutions.map((s) => ({ value: s.slug, label: tf(locale, s, "title") })),
-    ...(settings.sections.showPackages ? packages.map((p) => ({ value: p.slug, label: `${t.nav.packages} — ${tf(locale, p, "name")}` })) : []),
+    ...(settings.sections.showPackages ? packages.map((p) => ({ value: `package:${p.slug}`, label: `${t.nav.packages} — ${tf(locale, p, "name")}` })) : []),
   ];
   const requested = typeof sp.topic === "string" ? sp.topic : undefined;
   const defaultTopic = topics.some((o) => o.value === requested) ? requested : undefined;
