@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { audit } from "@/lib/audit";
@@ -14,6 +14,7 @@ import { leadUpdateSchema } from "@/lib/validation/content";
 
 export async function updateLeadStatus(id: string, status: string) {
   const user = await requireUser("leads.manage");
+  if (!isUuid(id)) return;
   const parsed = leadUpdateSchema.safeParse({ status });
   if (!parsed.success) return;
   const [row] = await db.update(leads).set({ status: parsed.data.status }).where(eq(leads.id, id)).returning({ name: leads.name });
@@ -37,6 +38,7 @@ export async function addLeadNote(id: string, _prev: FormState, fd: FormData): P
 
 export async function deleteLead(id: string) {
   const user = await requireUser("leads.manage");
+  if (!isUuid(id)) return;
   const [row] = await db.delete(leads).where(eq(leads.id, id)).returning({ name: leads.name });
   await audit({ userId: user.id, action: "lead.delete", entityType: "lead", entityId: id, summary: `Deleted lead from ${row?.name}` });
   revalidatePath("/admin/leads");

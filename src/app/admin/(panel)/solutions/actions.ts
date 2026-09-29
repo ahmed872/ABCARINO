@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { bool, int, json, list, str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { moveRow, nextSortOrder } from "@/lib/admin/reorder";
@@ -81,6 +81,7 @@ export async function saveSolution(id: string | null, _prev: FormState, fd: Form
 
 export async function moveSolution(id: string, dir: "up" | "down") {
   const user = await requireUser("content.edit");
+  if (!isUuid(id)) return;
   await moveRow(solutions, id, dir);
   await audit({ userId: user.id, action: "solution.reorder", entityType: "solution", entityId: id, summary: `Moved ${dir}` });
   revalidatePublicContent();
@@ -89,6 +90,7 @@ export async function moveSolution(id: string, dir: "up" | "down") {
 
 export async function setSolutionStatus(id: string, status: string) {
   const user = await requireUser("content.edit");
+  if (!isUuid(id)) return;
   const parsed = offeringStatusSchema.safeParse(status);
   if (!parsed.success) return;
   const [row] = await db.update(solutions).set({ status: parsed.data }).where(eq(solutions.id, id)).returning({ titleEn: solutions.titleEn });
@@ -99,6 +101,7 @@ export async function setSolutionStatus(id: string, status: string) {
 
 export async function deleteSolution(id: string) {
   const user = await requireUser("content.delete");
+  if (!isUuid(id)) return;
   const [row] = await db.delete(solutions).where(eq(solutions.id, id)).returning({ titleEn: solutions.titleEn });
   await audit({ userId: user.id, action: "solution.delete", entityType: "solution", entityId: id, summary: `Deleted “${row?.titleEn}”` });
   revalidatePublicContent();

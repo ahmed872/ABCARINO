@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { bool, int, json, list, str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { moveRow, nextSortOrder } from "@/lib/admin/reorder";
@@ -86,6 +86,7 @@ export async function savePackage(id: string | null, _prev: FormState, fd: FormD
 
 export async function movePackage(id: string, dir: "up" | "down") {
   const user = await requireUser("content.edit");
+  if (!isUuid(id)) return;
   await moveRow(packages, id, dir);
   await audit({ userId: user.id, action: "package.reorder", entityType: "package", entityId: id, summary: `Moved ${dir}` });
   revalidatePublicContent();
@@ -94,6 +95,7 @@ export async function movePackage(id: string, dir: "up" | "down") {
 
 export async function setPackageStatus(id: string, status: string) {
   const user = await requireUser("content.edit");
+  if (!isUuid(id)) return;
   const parsed = offeringStatusSchema.safeParse(status);
   if (!parsed.success) return;
   const [row] = await db.update(packages).set({ status: parsed.data }).where(eq(packages.id, id)).returning({ nameEn: packages.nameEn });
@@ -104,6 +106,7 @@ export async function setPackageStatus(id: string, status: string) {
 
 export async function deletePackage(id: string) {
   const user = await requireUser("content.delete");
+  if (!isUuid(id)) return;
   const [row] = await db.delete(packages).where(eq(packages.id, id)).returning({ nameEn: packages.nameEn });
   await audit({ userId: user.id, action: "package.delete", entityType: "package", entityId: id, summary: `Deleted “${row?.nameEn}”` });
   revalidatePublicContent();

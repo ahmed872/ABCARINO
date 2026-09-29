@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { bool, int, list, str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { moveRow, nextSortOrder } from "@/lib/admin/reorder";
@@ -61,6 +61,7 @@ export async function saveProject(id: string | null, _prev: FormState, fd: FormD
 
 export async function moveProject(id: string, dir: "up" | "down") {
   await requireUser("content.edit");
+  if (!isUuid(id)) return;
   await moveRow(projects, id, dir);
   revalidatePublicContent();
   revalidatePath("/admin/projects");
@@ -68,6 +69,7 @@ export async function moveProject(id: string, dir: "up" | "down") {
 
 export async function setProjectStatus(id: string, status: string) {
   const user = await requireUser("content.edit");
+  if (!isUuid(id)) return;
   if (status !== "published" && status !== "hidden") return;
   await db.update(projects).set({ status }).where(eq(projects.id, id));
   await audit({ userId: user.id, action: "project.status", entityType: "project", entityId: id, summary: `→ ${status}` });
@@ -77,6 +79,7 @@ export async function setProjectStatus(id: string, status: string) {
 
 export async function deleteProject(id: string) {
   const user = await requireUser("content.delete");
+  if (!isUuid(id)) return;
   const [row] = await db.delete(projects).where(eq(projects.id, id)).returning({ nameEn: projects.nameEn });
   await audit({ userId: user.id, action: "project.delete", entityType: "project", entityId: id, summary: `Deleted “${row?.nameEn}”` });
   revalidatePublicContent();

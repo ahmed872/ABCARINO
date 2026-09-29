@@ -23,11 +23,9 @@ export const latinExt = localFont({
 
 export const arabic = localFont({
   src: [
-    { path: "../fonts/ibm-plex-sans-arabic-arabic-300-normal.woff2", weight: "300", style: "normal" },
     { path: "../fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2", weight: "400", style: "normal" },
     { path: "../fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2", weight: "500", style: "normal" },
     { path: "../fonts/ibm-plex-sans-arabic-arabic-600-normal.woff2", weight: "600", style: "normal" },
-    { path: "../fonts/ibm-plex-sans-arabic-arabic-700-normal.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-arabic",
   display: "swap",

@@ -2,7 +2,7 @@
 
 import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { bool, str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { audit } from "@/lib/audit";
@@ -52,6 +52,7 @@ export async function mediaUsage(id: string): Promise<string[]> {
 
 export async function deleteMedia(id: string): Promise<{ ok: boolean; message?: string }> {
   const user = await requireUser("media.manage");
+  if (!isUuid(id)) return { ok: false, message: "Invalid id." };
   const uses = await mediaUsage(id);
   if (uses.length) return { ok: false, message: `This image is still used by: ${uses.join(", ")}. Remove it there first.` };
   const [row] = await db.delete(media).where(eq(media.id, id)).returning({ storageKey: media.storageKey, originalName: media.originalName });

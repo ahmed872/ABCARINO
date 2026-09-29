@@ -4,10 +4,13 @@ import { headers } from "next/headers";
 import { env } from "@/lib/env";
 
 /**
- * Best-effort client IP.
- * With TRUST_PROXY=true we read X-Real-IP (set by nginx/Caddy) or the right-most
- * X-Forwarded-For entry added by the trusted proxy. Otherwise we do not trust
- * client-supplied forwarding headers at all.
+ * Best-effort client IP for rate limiting and privacy-preserving lead hashes.
+ *
+ * Production runs behind a reverse proxy (TRUST_PROXY=true) that overwrites
+ * X-Real-IP with the socket address — that value cannot be spoofed.
+ * Without a proxy, Next.js only fills X-Forwarded-For when the client didn't
+ * send one, so the value is best-effort; login is additionally protected by
+ * per-account limits and lockout, which do not depend on the IP.
  */
 export async function getClientIp(): Promise<string> {
   const h = await headers();
@@ -21,7 +24,6 @@ export async function getClientIp(): Promise<string> {
     }
   }
   const xff = h.get("x-forwarded-for");
-  // Next.js' own server records the socket address as the last hop.
   if (xff) {
     const parts = xff.split(",").map((s) => s.trim()).filter(Boolean);
     if (parts.length) return parts[parts.length - 1];

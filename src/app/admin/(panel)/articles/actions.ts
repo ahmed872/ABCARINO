@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { audit } from "@/lib/audit";
@@ -57,6 +57,7 @@ export async function saveArticle(id: string | null, _prev: FormState, fd: FormD
 
 export async function deleteArticle(id: string) {
   const user = await requireUser("content.delete");
+  if (!isUuid(id)) return;
   const [row] = await db.delete(articles).where(eq(articles.id, id)).returning({ titleEn: articles.titleEn });
   await audit({ userId: user.id, action: "article.delete", entityType: "article", entityId: id, summary: `Deleted “${row?.titleEn}”` });
   revalidatePublicContent();

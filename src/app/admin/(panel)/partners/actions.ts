@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { bool, int, str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { moveRow, nextSortOrder } from "@/lib/admin/reorder";
@@ -51,6 +51,7 @@ export async function savePartner(id: string | null, _prev: FormState, fd: FormD
 
 export async function movePartner(id: string, dir: "up" | "down") {
   await requireUser("content.edit");
+  if (!isUuid(id)) return;
   await moveRow(partners, id, dir);
   revalidatePublicContent();
   revalidatePath("/admin/partners");
@@ -58,6 +59,7 @@ export async function movePartner(id: string, dir: "up" | "down") {
 
 export async function setPartnerStatus(id: string, status: string) {
   const user = await requireUser("content.edit");
+  if (!isUuid(id)) return;
   if (status !== "published" && status !== "hidden") return;
   await db.update(partners).set({ status }).where(eq(partners.id, id));
   await audit({ userId: user.id, action: "partner.status", entityType: "partner", entityId: id, summary: `→ ${status}` });
@@ -67,6 +69,7 @@ export async function setPartnerStatus(id: string, status: string) {
 
 export async function deletePartner(id: string) {
   const user = await requireUser("content.delete");
+  if (!isUuid(id)) return;
   const [row] = await db.delete(partners).where(eq(partners.id, id)).returning({ name: partners.name });
   await audit({ userId: user.id, action: "partner.delete", entityType: "partner", entityId: id, summary: `Deleted “${row?.name}”` });
   revalidatePublicContent();

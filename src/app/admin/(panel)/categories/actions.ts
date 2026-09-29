@@ -3,7 +3,7 @@
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { adminAction } from "@/lib/admin/guard";
+import { adminAction, isUuid } from "@/lib/admin/guard";
 import { bool, int, str } from "@/lib/admin/form-data";
 import type { FormState } from "@/lib/admin/form-state";
 import { moveRow, nextSortOrder } from "@/lib/admin/reorder";
@@ -56,6 +56,7 @@ export async function saveCategory(id: string | null, _prev: FormState, fd: Form
 
 export async function moveCategory(id: string, dir: "up" | "down") {
   const user = await requireUser("content.edit");
+  if (!isUuid(id)) return;
   const [row] = await db.select({ scope: categories.scope }).from(categories).where(eq(categories.id, id)).limit(1);
   if (!row) return;
   await moveRow(categories, id, dir, eq(categories.scope, row.scope));
@@ -66,6 +67,7 @@ export async function moveCategory(id: string, dir: "up" | "down") {
 
 export async function deleteCategory(id: string) {
   const user = await requireUser("content.delete");
+  if (!isUuid(id)) return;
   const [row] = await db.delete(categories).where(eq(categories.id, id)).returning({ nameEn: categories.nameEn });
   await audit({ userId: user.id, action: "category.delete", entityType: "category", entityId: id, summary: `Deleted “${row?.nameEn}” (items keep existing without a category)` });
   revalidatePublicContent();
