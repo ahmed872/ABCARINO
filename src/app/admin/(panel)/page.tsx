@@ -25,13 +25,12 @@ function Stat({ label, value, sub, href }: { label: string; value: number | stri
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
   const user = await requirePageUser("dashboard.view");
   const sp = await searchParams;
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const [settings, solStats, pkgStats, leadStats, [{ recentLeads }], [{ mediaCount }], [{ articleCount }], [{ projectCount }], latestLeads, activity] = await Promise.all([
     querySettings(),
     db.select({ status: solutions.status, n: count() }).from(solutions).groupBy(solutions.status),
     db.select({ status: packages.status, n: count() }).from(packages).groupBy(packages.status),
     db.select({ status: leads.status, n: count() }).from(leads).groupBy(leads.status),
-    db.select({ recentLeads: count() }).from(leads).where(gte(leads.createdAt, since)),
+    db.select({ recentLeads: count() }).from(leads).where(gte(leads.createdAt, sql`now() - interval '30 days'`)),
     db.select({ mediaCount: count() }).from(media),
     db.select({ articleCount: count() }).from(articles),
     db.select({ projectCount: count() }).from(projects),
@@ -63,7 +62,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title={`Welcome, ${user.name.split(" ")[0]}`} description="An overview of the website and incoming enquiries." />
-      {sp.denied ? <Notice tone="warning">Your role doesn't have access to that page.</Notice> : null}
+      {sp.denied ? <Notice tone="warning">Your role doesn’t have access to that page.</Notice> : null}
 
       <div className="mb-8 flex flex-wrap items-center gap-2 text-sm">
         <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-medium", settings.maintenance.enabled ? "bg-glow/30 text-[#7a4f10]" : "bg-ok/10 text-ok")}>
@@ -112,7 +111,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-stone">No leads yet. They'll appear here as soon as someone uses the contact form.</p>
+            <p className="mt-4 text-sm text-stone">No leads yet. They’ll appear here as soon as someone uses the contact form.</p>
           )}
         </section>
 

@@ -256,7 +256,7 @@ export function SegmentedField({
   return (
     <fieldset>
       <legend className="admin-label">{label}</legend>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className={cn("grid gap-2", options.length === 2 ? "sm:grid-cols-2" : options.length === 4 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3")}>
         {options.map((o) => (
           <label key={o.value} className="cursor-pointer">
             <input type="radio" name={name} value={o.value} defaultChecked={defaultValue === o.value} className="peer sr-only" />

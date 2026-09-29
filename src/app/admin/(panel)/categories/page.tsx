@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { asc, count, eq } from "drizzle-orm";
+import { asc, count } from "drizzle-orm";
 import { DeleteButton, MoveButtons } from "@/components/admin/RowActions";
 import { Badge, LinkButton, Notice, PageHeader, Table, Td, Th } from "@/components/admin/ui";
 import { can } from "@/lib/auth/permissions";
