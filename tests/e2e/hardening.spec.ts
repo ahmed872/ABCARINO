@@ -191,7 +191,8 @@ test.describe("stored XSS", () => {
       await assertNoXss(a, path);
     }
     await adminCtx.close();
-    // Restore defaults for later specs.
+    // Restore defaults for later specs (hide the priced XSS fixture package too).
+    await sql`update packages set status = 'hidden' where id = ${pkg.id}`;
     await sql`delete from settings where key in ('pages','contact','cta','footer','sections')`;
     await callAction("saveSettings", ["sections", { ok: false }, form({ showPackages: true, showPackagePrices: true, showComingSoon: true })], { cookie: admin.cookie, path: "/admin/settings" });
   });

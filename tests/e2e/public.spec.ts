@@ -61,10 +61,15 @@ test.describe("public website", () => {
     await expect(page.getByText("This solution is being prepared")).toBeVisible();
   });
 
-  test("packages never show invented prices", async ({ page }) => {
-    await page.goto("/en/packages");
-    await expect(page.getByText("Price on request").first()).toBeVisible();
-    await expect(page.locator("body")).not.toContainText("EGP");
+  test("seeded packages never show invented prices", async ({ page }) => {
+    // The starter content must not invent prices: every seeded package is "on request" or "coming soon".
+    const seeded = ["smart-lighting-essentials", "smart-home-starter", "business-website", "media-room", "home-cinema", "gaming-room", "smart-office"];
+    for (const slug of seeded) {
+      await page.goto(`/en/packages/${slug}`);
+      const hero = page.locator("main section").first();
+      await expect(hero, slug).toContainText(/Price on request|Coming soon/);
+      await expect(hero, slug).not.toContainText(/EGP|\$|€/);
+    }
   });
 
   test("prepared sections return 404 until enabled", async ({ page }) => {
