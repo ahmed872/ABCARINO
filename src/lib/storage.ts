@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
+import sharp, { type Metadata as SharpMetadata } from "sharp";
 
 /**
  * Local-disk media storage.
@@ -38,7 +38,7 @@ export async function storeImage(input: Buffer): Promise<StoredImage> {
   if (input.byteLength === 0) throw new UploadError("The file is empty.");
   if (input.byteLength > MAX_UPLOAD_BYTES) throw new UploadError("The file is larger than 15 MB.");
 
-  let meta: sharp.Metadata;
+  let meta: SharpMetadata;
   try {
     meta = await sharp(input, { limitInputPixels: 60_000_000 }).metadata();
   } catch {

@@ -121,7 +121,7 @@
 
   /* Display type: tight, confident Latin; relaxed Arabic. */
   .display-1 {
-    font-size: clamp(2.75rem, 1.6rem + 5.4vw, 6.5rem);
+    font-size: clamp(2.6rem, 1.5rem + 4.1vw, 5.6rem);
     line-height: 0.98;
     letter-spacing: -0.035em;
     font-weight: 560;
@@ -139,7 +139,7 @@
     font-weight: 560;
   }
   :root[lang="ar"] .display-1 {
-    font-size: clamp(2.5rem, 1.5rem + 4.6vw, 5.5rem);
+    font-size: clamp(2.4rem, 1.4rem + 3.6vw, 4.8rem);
     line-height: 1.22;
     letter-spacing: 0;
     font-weight: 600;

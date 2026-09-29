@@ -32,7 +32,7 @@ export function Logo({ locale, tone = "ink", custom, className, size = "md" }: P
     <span className={cn("inline-flex items-center gap-2.5", tone === "paper" ? "text-paper" : "text-ink", className)}>
       <Mark tone={tone} className={cn(markSize, "shrink-0")} />
       <span className="flex flex-col leading-none">
-        <span dir="ltr" className={cn("font-[600] tracking-[0.18em]", text)} style={{ letterSpacing: "0.18em" }}>
+        <span dir="ltr" className={cn("font-[600]", text)} style={{ letterSpacing: "0.18em" }}>
           ABCARINO
         </span>
         {locale === "ar" ? (
