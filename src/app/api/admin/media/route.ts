@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp, isSameOrigin } from "@/lib/security/request";
-import { MAX_UPLOAD_BYTES, storeImage, UploadError } from "@/lib/storage";
+import { MAX_UPLOAD_BYTES, sanitizeFilename, storeImage, UploadError } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const stored = await storeImage(Buffer.from(await file.arrayBuffer()));
-    const originalName = file.name.replace(/[^\w.\- ]+/g, "").slice(0, 120);
+    const originalName = sanitizeFilename(file.name);
     const altEn = String(form.get("altEn") ?? "").trim().slice(0, 200);
     const [row] = await db
       .insert(media)

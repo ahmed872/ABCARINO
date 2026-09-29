@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { del, put } from "@vercel/blob";
-import sharp, { type Metadata as SharpMetadata } from "sharp";
+import sharp, { type Metadata as SharpMetadata, type OutputInfo } from "sharp";
+import { sanitizeFilename } from "@/lib/utils";
+export { sanitizeFilename };
 
 /**
  * Local-disk media storage.
@@ -56,11 +58,18 @@ export async function storeImage(input: Buffer): Promise<StoredImage> {
     throw new UploadError("Unsupported image format. Use JPEG, PNG, WebP or AVIF.");
   }
 
-  const { data, info } = await sharp(input, { limitInputPixels: 60_000_000, animated: false })
-    .rotate()
-    .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: "inside", withoutEnlargement: true })
-    .webp({ quality: 82, effort: 4 })
-    .toBuffer({ resolveWithObject: true });
+  let data: Buffer;
+  let info: OutputInfo;
+  try {
+    ({ data, info } = await sharp(input, { limitInputPixels: 60_000_000, animated: false })
+      .rotate()
+      .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82, effort: 4 })
+      .toBuffer({ resolveWithObject: true }));
+  } catch {
+    // Valid header but undecodable pixel data (truncated/corrupt file).
+    throw new UploadError("This image could not be processed. It may be damaged — try exporting it again.");
+  }
 
   const storageKey = `${randomUUID()}.webp`;
   let url: string;

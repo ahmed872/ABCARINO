@@ -56,3 +56,17 @@ describe("rate limiting", () => {
     expect(rateLimit("t", "k", 3, 60_000).ok).toBe(true);
   });
 });
+
+describe("error logging", () => {
+  it("never includes SQL parameters from database errors", async () => {
+    const { describeError } = await import("@/lib/admin/guard");
+    const dbErr = Object.assign(new Error('Failed query: update "users" set "password_hash" = $1\nparams: scrypt$32768$8$1$SECRETSALT$SECRETHASH'), {
+      cause: { code: "23503", message: 'insert or update on table "solutions" violates foreign key constraint' },
+    });
+    const out = describeError(dbErr);
+    expect(out).toContain("23503");
+    expect(out).not.toContain("SECRET");
+    expect(out).not.toContain("params");
+    expect(describeError(new Error("line one\nline two with secret"))).toBe("Error: line one");
+  });
+});

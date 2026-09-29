@@ -113,3 +113,18 @@ export function videoEmbedUrl(url: string | null | undefined): string | null {
   }
   return null;
 }
+
+/**
+ * Display-only name for an uploaded file (never used as a path). Keeps Unicode
+ * letters (Arabic names survive) but drops control characters, path separators
+ * and characters reserved on common filesystems.
+ */
+export function sanitizeFilename(name: string): string {
+  return name
+    .normalize("NFC")
+    .replace(/[\u0000-\u001f\u007f<>:"/\\|?*\u202a-\u202e\u2066-\u2069]+/g, "")
+    .replace(/\.{2,}/g, ".")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}

@@ -7,6 +7,7 @@ type Sortable = typeof solutions | typeof packages | typeof categories | typeof 
 
 /** Move a row one step up/down and renumber its list in steps of 10. */
 export async function moveRow(table: Sortable, id: string, dir: "up" | "down", scope?: SQL) {
+  if (dir !== "up" && dir !== "down") return; // client-supplied: anything else is ignored
   const t = table as unknown as typeof solutions;
   const rows = await db
     .select({ id: t.id })

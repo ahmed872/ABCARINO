@@ -43,3 +43,20 @@ describe("prices", () => {
     expect(formatPrice(null, "EGP", "en")).toBe("");
   });
 });
+
+describe("upload filename sanitising (display only)", () => {
+  it("keeps Arabic and other Unicode names (regression)", async () => {
+    const { sanitizeFilename } = await import("@/lib/utils");
+    expect(sanitizeFilename("صورة غرفة المعيشة.png")).toBe("صورة غرفة المعيشة.png");
+  });
+  it("removes path separators, markup-significant and control characters", async () => {
+    const { sanitizeFilename } = await import("@/lib/utils");
+    expect(sanitizeFilename("../../etc/passwd.png")).toBe(".etcpasswd.png");
+    expect(sanitizeFilename('"><img src=x onerror=alert(1)>.png')).toBe("img src=x onerror=alert(1).png");
+    expect(sanitizeFilename("a\u0000b\nc.png")).toBe("abc.png");
+  });
+  it("removes bidi overrides used to disguise extensions (RTLO)", async () => {
+    const { sanitizeFilename } = await import("@/lib/utils");
+    expect(sanitizeFilename("invoice‮gnp.exe")).toBe("invoicegnp.exe");
+  });
+});

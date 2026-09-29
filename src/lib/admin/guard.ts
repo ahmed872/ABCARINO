@@ -24,7 +24,7 @@ export async function adminAction(
     unstable_rethrow(err);
     if (err instanceof AuthorizationError) return { ok: false, message: err.message };
     if (isUniqueViolation(err)) return { ok: false, errors: { slug: "This slug is already in use." }, message: "Please fix the highlighted fields." };
-    console.error("[admin action]", err);
+    console.error("[admin action]", describeError(err));
     return { ok: false, message: "Something went wrong. Please try again." };
   }
 }
@@ -39,4 +39,17 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Server actions receive ids from the client: validate before touching the database. */
 export function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID.test(value);
+}
+
+/**
+ * Log-safe error summary: database errors carry the SQL *and bound parameters*
+ * (which may include password hashes or personal data), so only the error
+ * class, database code and message are logged.
+ */
+export function describeError(err: unknown): string {
+  const e = err as { name?: string; message?: string; code?: string; cause?: { code?: string; message?: string } } | null;
+  if (e?.cause?.code || e?.code) {
+    return `${e?.name ?? "Error"}: database error ${e?.cause?.code ?? e?.code} (${(e?.cause?.message ?? "").slice(0, 200)})`;
+  }
+  return `${e?.name ?? "Error"}: ${(e?.message ?? String(err)).split("\n")[0].slice(0, 300)}`;
 }

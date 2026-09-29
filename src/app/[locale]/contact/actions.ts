@@ -39,7 +39,8 @@ export async function submitLead(_prev: ContactState, formData: FormData): Promi
       const key = issue.message as keyof NonNullable<ContactState["fields"]>;
       if (["name", "phone", "email", "message", "contact"].includes(key)) fields[key] = true;
     }
-    return { status: "error", fields };
+    // A failure on a field the visitor can't see (tampered request) still gets a visible message.
+    return Object.keys(fields).length ? { status: "error", fields } : { status: "error", error: "generic" };
   }
 
   try {

@@ -43,3 +43,32 @@ describe("media storage", () => {
     expect(await readStoredFile("not-a-uuid.webp")).toBeNull();
   });
 });
+
+describe("media storage — adversarial inputs (regression)", () => {
+  it("rejects truncated/corrupt images with an UploadError, not a crash", async () => {
+    const png = await sharp({ create: { width: 400, height: 300, channels: 3, background: "#ff5b1f" } }).png().toBuffer();
+    await expect(storeImage(png.subarray(0, Math.floor(png.length / 2)))).rejects.toBeInstanceOf(UploadError);
+  });
+  it("rejects decompression bombs (tiny file declaring 900 MP)", async () => {
+    const { crc32 } = await import("node:zlib");
+    const png = Buffer.from(await sharp({ create: { width: 10, height: 10, channels: 3, background: "#000" } }).png().toBuffer());
+    png.writeUInt32BE(30000, 16);
+    png.writeUInt32BE(30000, 20);
+    png.writeUInt32BE(crc32(png.subarray(12, 29)) >>> 0, 29);
+    await expect(storeImage(png)).rejects.toBeInstanceOf(UploadError);
+  });
+  it("strips GPS location data from photos", async () => {
+    const jpg = await sharp({ create: { width: 300, height: 200, channels: 3, background: "#123456" } })
+      .withExif({ IFD3: { GPSLatitudeRef: "N", GPSLatitude: "30/1 2/1 0/1" } })
+      .jpeg()
+      .toBuffer();
+    expect((await sharp(jpg).metadata()).exif).toBeDefined();
+    const stored = await storeImage(jpg);
+    const out = await readStoredFile(stored.storageKey);
+    expect((await sharp(out!.data).metadata()).exif).toBeUndefined();
+  });
+  it("rejects SVG even when well-formed (script-capable format)", async () => {
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><script>alert(1)</script><rect width="10" height="10"/></svg>');
+    await expect(storeImage(svg)).rejects.toBeInstanceOf(UploadError);
+  });
+});
