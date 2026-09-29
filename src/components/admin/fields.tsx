@@ -1,7 +1,6 @@
 "use client";
 
-import { createContext, useActionState, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { useFormStatus } from "react-dom";
+import { createContext, startTransition, useActionState, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { FormState } from "@/lib/admin/form-state";
 import { cn, slugify } from "@/lib/utils";
 
@@ -23,7 +22,7 @@ export function EntityForm({
   footer?: ReactNode;
   className?: string;
 }) {
-  const [state, formAction] = useActionState(action, { ok: false });
+  const [state, formAction, pending] = useActionState(action, { ok: false });
   const [dirty, setDirty] = useState(false);
   const errors = state.errors ?? {};
   const errorCount = Object.keys(errors).length;
@@ -38,9 +37,13 @@ export function EntityForm({
   return (
     <ErrorsContext.Provider value={errors}>
       <form
-        action={(fd) => {
+        // Submitting via onSubmit (not the `action` prop) keeps the user's input
+        // on validation errors — React resets action-submitted forms.
+        onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
           setDirty(false);
-          return formAction(fd);
+          startTransition(() => formAction(fd));
         }}
         onChange={() => setDirty(true)}
         className={cn("space-y-6", className)}
@@ -69,15 +72,14 @@ export function EntityForm({
         {children}
         <div className="sticky bottom-0 z-10 -mx-4 flex items-center justify-between gap-4 border-t border-ink/10 bg-paper/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border">
           <div className="text-xs text-stone">{dirty ? "Unsaved changes" : footer}</div>
-          <SubmitButton label={submitLabel} />
+          <SubmitButton label={submitLabel} pending={pending} />
         </div>
       </form>
     </ErrorsContext.Provider>
   );
 }
 
-export function SubmitButton({ label, variant = "ink" }: { label: string; variant?: "ink" | "danger" | "ghost" }) {
-  const { pending } = useFormStatus();
+export function SubmitButton({ label, pending, variant = "ink" }: { label: string; pending: boolean; variant?: "ink" | "danger" | "ghost" }) {
   return (
     <button
       type="submit"

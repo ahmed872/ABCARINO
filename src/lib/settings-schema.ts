@@ -18,7 +18,7 @@ export const generalSettingsSchema = z.object({
 
 export const contactSettingsSchema = z.object({
   whatsappNumber: str(32),
-  whatsappMessageEn: str(300).default("Hello ABCARINO, I'd like to talk about a project."),
+  whatsappMessageEn: str(300).default("Hello ABCARINO, I’d like to talk about a project."),
   whatsappMessageAr: str(300).default("مرحبًا عبقرينو، أود التحدث عن مشروع."),
   email: z.union([z.literal(""), z.email().max(200)]).default(""),
   phone: str(40),
@@ -64,7 +64,7 @@ export const sectionsSettingsSchema = z.object({
 
 export const maintenanceSettingsSchema = z.object({
   enabled: z.boolean().default(false),
-  messageEn: str(400).default("We're refining a few details. Please check back shortly."),
+  messageEn: str(400).default("We’re refining a few details. Please check back shortly."),
   messageAr: str(400).default("نعمل على تحسين بعض التفاصيل. يُرجى العودة قريبًا."),
 });
 

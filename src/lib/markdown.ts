@@ -53,7 +53,18 @@ export function parseInline(src: string): Inline[] {
     }
     if (src[i] === "[") {
       const close = src.indexOf("](", i);
-      const end = close > -1 ? src.indexOf(")", close + 2) : -1;
+      let end = -1;
+      if (close > -1) {
+        // Find the matching ")" so URLs containing parentheses stay intact.
+        let depth = 1;
+        for (let j = close + 2; j < src.length; j++) {
+          if (src[j] === "(") depth++;
+          else if (src[j] === ")" && --depth === 0) {
+            end = j;
+            break;
+          }
+        }
+      }
       if (close > i && end > close) {
         const href = safeHref(src.slice(close + 2, end));
         const label = src.slice(i + 1, close);

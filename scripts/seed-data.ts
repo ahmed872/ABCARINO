@@ -93,7 +93,7 @@ export const seedSolutions: SeedSolution[] = [
     summaryEn: "A home that responds to your routine — lighting, scenes and everyday automation working as one system.",
     summaryAr: "منزل يستجيب لروتينك — إضاءة ومشاهد وأتمتة يومية تعمل كنظام واحد.",
     descriptionEn:
-      "A smart home is not a collection of gadgets. It's a home that understands a few important moments — waking up, leaving, coming back, relaxing, sleeping — and handles them for you.\n\nWe start with how your household actually lives, then design a system that is simple to use for everyone at home, from a wall switch to a phone. It can begin with one apartment floor and grow room by room on the same foundation.",
+      "A smart home is not a collection of gadgets. It’s a home that understands a few important moments — waking up, leaving, coming back, relaxing, sleeping — and handles them for you.\n\nWe start with how your household actually lives, then design a system that is simple to use for everyone at home, from a wall switch to a phone. It can begin with one apartment floor and grow room by room on the same foundation.",
     descriptionAr:
       "المنزل الذكي ليس مجموعة من الأجهزة، بل منزل يفهم لحظات مهمة في يومك — الاستيقاظ والخروج والعودة والاسترخاء والنوم — ويتولّاها عنك.\n\nنبدأ بطريقة عيش أسرتك فعلًا، ثم نصمّم نظامًا سهل الاستخدام لكل من في المنزل، من مفتاح الحائط إلى الهاتف. ويمكن أن يبدأ بطابق واحد ثم ينمو غرفةً بعد غرفة على الأساس نفسه.",
     benefits: [
@@ -121,7 +121,7 @@ export const seedSolutions: SeedSolution[] = [
     summaryEn: "Lighting that sets the mood with one touch — dimming, scenes and schedules that make every room feel right.",
     summaryAr: "إضاءة تهيّئ الأجواء بلمسة واحدة — تعتيم ومشاهد وجداول تجعل كل غرفة كما تحب.",
     descriptionEn:
-      "Light changes how a space feels more than anything else. Smart lighting lets each room move between bright and focused, warm and relaxed, or softly lit at night — without walking around flipping switches.\n\nWe design lighting control around your rooms and habits: which lights belong together, which scenes you'll really use, and where a simple switch is still the best answer.",
+      "Light changes how a space feels more than anything else. Smart lighting lets each room move between bright and focused, warm and relaxed, or softly lit at night — without walking around flipping switches.\n\nWe design lighting control around your rooms and habits: which lights belong together, which scenes you’ll really use, and where a simple switch is still the best answer.",
     descriptionAr:
       "لا شيء يغيّر إحساس المكان مثل الضوء. تتيح لك الإضاءة الذكية أن تنتقل كل غرفة بين الإضاءة الساطعة للتركيز، والدافئة للاسترخاء، والخافتة ليلًا — دون أن تتنقّل بين المفاتيح.\n\nنصمّم التحكّم في الإضاءة حول غرفك وعاداتك: أي الأضواء تعمل معًا، وأي المشاهد ستستخدمها فعلًا، وأين يبقى المفتاح البسيط هو الحل الأفضل.",
     benefits: [
@@ -147,12 +147,12 @@ export const seedSolutions: SeedSolution[] = [
     summaryEn: "Everyday routines handled automatically — leaving, arriving and bedtime, without thinking about it.",
     summaryAr: "روتينك اليومي يُدار تلقائيًا — الخروج والعودة ووقت النوم، دون أن تفكّر فيه.",
     descriptionEn:
-      "Automation turns repeated actions into moments that simply happen. When you leave, the house settles. When you arrive, it's ready. At night, it quietly switches itself down.\n\nWe keep automations few, clear and reliable — the ones that remove real friction from your day.",
+      "Automation turns repeated actions into moments that simply happen. When you leave, the house settles. When you arrive, it’s ready. At night, it quietly switches itself down.\n\nWe keep automations few, clear and reliable — the ones that remove real friction from your day.",
     descriptionAr:
       "تحوّل الأتمتة الأفعال المتكرّرة إلى لحظات تحدث وحدها. عندما تغادر يهدأ المنزل، وعندما تعود يكون جاهزًا، وفي الليل يُطفئ نفسه بهدوء.\n\nنحرص على أن تكون الأتمتة قليلة وواضحة وموثوقة — تلك التي تزيل عناءً حقيقيًا من يومك.",
     benefits: [
       b("Fewer small tasks", "مهام صغيرة أقل", "The house handles the repetitive switching for you.", "يتولّى المنزل التشغيل والإطفاء المتكرّر بدلًا منك."),
-      b("Peace of mind", "راحة بال", "Check and control your home when you're away.", "تابع منزلك وتحكّم فيه وأنت بعيد عنه."),
+      b("Peace of mind", "راحة بال", "Check and control your home when you’re away.", "تابع منزلك وتحكّم فيه وأنت بعيد عنه."),
       b("Built on your routine", "مبنية على روتينك", "Automations follow how your household lives, not a template.", "تتبع الأتمتة طريقة عيش أسرتك، لا قالبًا جاهزًا."),
     ],
     features: [
@@ -367,10 +367,10 @@ export const seedSolutions: SeedSolution[] = [
     visualKey: "software",
     titleEn: "Custom Technology Solutions",
     titleAr: "حلول تقنية مخصّصة",
-    summaryEn: "Have a problem that doesn't fit a category? Tell us — we'll design around it.",
+    summaryEn: "Have a problem that doesn’t fit a category? Tell us — we’ll design around it.",
     summaryAr: "لديك مشكلة لا تناسب أي تصنيف؟ أخبرنا — وسنصمّم الحل حولها.",
     descriptionEn:
-      "Some of the most useful solutions combine hardware and software in ways no catalogue offers: connecting devices to a dashboard, automating an operational task, or linking systems that don't talk to each other.\n\nWe start by understanding the problem, then propose what is realistic, with a clear scope.",
+      "Some of the most useful solutions combine hardware and software in ways no catalogue offers: connecting devices to a dashboard, automating an operational task, or linking systems that don’t talk to each other.\n\nWe start by understanding the problem, then propose what is realistic, with a clear scope.",
     descriptionAr:
       "بعض أنفع الحلول تجمع بين الأجهزة والبرمجيات بطرق لا يقدّمها أي كتالوج: ربط أجهزة بلوحة تحكّم، أو أتمتة مهمة تشغيلية، أو ربط أنظمة لا تتواصل فيما بينها.\n\nنبدأ بفهم المشكلة، ثم نقترح ما هو واقعي وبنطاق واضح.",
     features: [
@@ -411,7 +411,7 @@ export const seedPackages: SeedPackage[] = [
     taglineEn: "Lighting that sets the mood with one touch.",
     taglineAr: "إضاءة تهيّئ الأجواء بلمسة واحدة.",
     descriptionEn:
-      "The simplest way to feel the difference of a smart home. We upgrade lighting control in the rooms you choose, create the scenes you'll actually use, and set up app and voice control for your household.",
+      "The simplest way to feel the difference of a smart home. We upgrade lighting control in the rooms you choose, create the scenes you’ll actually use, and set up app and voice control for your household.",
     descriptionAr:
       "أبسط طريقة لتشعر بفرق المنزل الذكي. نطوّر التحكّم في الإضاءة في الغرف التي تختارها، وننشئ المشاهد التي ستستخدمها فعلًا، ونجهّز التحكّم بالتطبيق والصوت لأسرتك.",
     included: [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useEffect, useRef } from "react";
 import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { submitLead, type ContactState } from "./actions";
@@ -48,7 +48,16 @@ export function ContactForm({
   const bad = "border-signal";
 
   return (
-    <form action={action} noValidate className="space-y-6" aria-describedby="form-status">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(() => action(fd));
+      }}
+      noValidate
+      className="space-y-6"
+      aria-describedby="form-status"
+    >
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="sourcePath" value={`/${locale}/contact`} />
       <input ref={startedRef} type="hidden" name="started_at" defaultValue="0" />

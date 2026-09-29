@@ -72,7 +72,7 @@ const en = {
     packagesIntro:
       "Packages give you a defined place to begin. Each one is adapted to your space before anything is installed.",
     whyEyebrow: "Why ABCARINO",
-    whyTitle: "How we're different.",
+    whyTitle: "How we’re different.",
     why: [
       {
         title: "Solutions, not boxes",
@@ -80,7 +80,7 @@ const en = {
       },
       {
         title: "Designed before installed",
-        text: "Every project starts with a plan: what it does, how it's wired and how you'll use it. No improvising on site.",
+        text: "Every project starts with a plan: what it does, how it’s wired and how you’ll use it. No improvising on site.",
       },
       {
         title: "Built to grow",
@@ -88,33 +88,33 @@ const en = {
       },
       {
         title: "Hardware and software, one team",
-        text: "Because we also write software, we can connect systems that usually don't talk to each other.",
+        text: "Because we also write software, we can connect systems that usually don’t talk to each other.",
       },
       {
         title: "Comfort is the measure",
-        text: "Technology should disappear into daily life. If it needs a manual to enjoy, we haven't finished.",
+        text: "Technology should disappear into daily life. If it needs a manual to enjoy, we haven’t finished.",
       },
       {
         title: "Straight answers",
-        text: "Clear scope, clear proposal, clear handover. You know what you're getting before work begins.",
+        text: "Clear scope, clear proposal, clear handover. You know what you’re getting before work begins.",
       },
     ],
     processEyebrow: "How we work",
     processTitle: "A clear path from conversation to comfort.",
     process: [
-      { title: "Listen", text: "We start with how you live or work, what frustrates you, and how you'd like the space to feel." },
-      { title: "Assess", text: "We study the space, the existing wiring and the constraints, and define what's realistic." },
+      { title: "Listen", text: "We start with how you live or work, what frustrates you, and how you’d like the space to feel." },
+      { title: "Assess", text: "We study the space, the existing wiring and the constraints, and define what’s realistic." },
       { title: "Design", text: "You receive a clear solution design and proposal: scope, equipment and timeline." },
       { title: "Integrate", text: "Our team and specialist installers set up, configure and test every scene." },
       { title: "Hand over", text: "We walk you through it, tune it to your routine, and stay reachable afterwards." },
     ],
     futureEyebrow: "In preparation",
-    futureTitle: "What's coming next.",
+    futureTitle: "What’s coming next.",
     futureIntro:
-      "We're growing our capabilities deliberately. These solutions are being prepared — tell us if one matters to you.",
+      "We’re growing our capabilities deliberately. These solutions are being prepared — tell us if one matters to you.",
     futureCta: "Register interest",
     dayEyebrow: "A day, quietly handled",
-    dayTitle: "Comfort you notice only when it's missing.",
+    dayTitle: "Comfort you notice only when it’s missing.",
     dayIntro: "A concept of how a well-designed home can respond through the day.",
     day: [
       { time: "06:45", title: "Wake", text: "Bedroom light rises slowly with the morning, never a sudden glare." },
@@ -124,9 +124,9 @@ const en = {
       { time: "23:30", title: "Rest", text: "Everything settles. Soft night paths guide you if you get up." },
     ],
     ctaEyebrow: "Start here",
-    ctaTitle: "Let's talk about your space.",
+    ctaTitle: "Let’s talk about your space.",
     ctaText:
-      "Tell us what you'd like to improve. We'll reply with honest advice and the next sensible step — whether that's a small upgrade or a full plan.",
+      "Tell us what you’d like to improve. We’ll reply with honest advice and the next sensible step — whether that’s a small upgrade or a full plan.",
     ctaSecondary: "Send a message",
   },
   about: {
@@ -147,8 +147,8 @@ const en = {
     ],
     comfortTitle: "Future and comfort, together.",
     comfortText:
-      "We're excited by what technology makes possible. But the future only matters when it feels natural at home and at work. That balance — ambitious and comfortable — is what we build towards.",
-    modelEyebrow: "How we're built",
+      "We’re excited by what technology makes possible. But the future only matters when it feels natural at home and at work. That balance — ambitious and comfortable — is what we build towards.",
+    modelEyebrow: "How we’re built",
     modelTitle: "A focused core team, the right specialists.",
     modelText:
       "ABCARINO is led by a core team with backgrounds in software and smart systems. For each project we bring in the specialists it needs — installers, designers and technicians — and we stay accountable for the result, from the first conversation to the handover.",
@@ -161,16 +161,16 @@ const en = {
     eyebrow: "Solutions",
     title: "Technology solutions, designed around you.",
     intro:
-      "Explore what we can design and integrate today, and what we're preparing next. Every solution starts with a conversation about your space.",
+      "Explore what we can design and integrate today, and what we’re preparing next. Every solution starts with a conversation about your space.",
     availableNow: "Available now",
     inPreparation: "In preparation",
     benefits: "What it changes",
-    features: "What's included",
+    features: "What’s included",
     relatedPackages: "Related packages",
     gallery: "Gallery",
     others: "Explore other solutions",
     comingSoonNotice:
-      "This solution is being prepared. Register your interest and we'll contact you as soon as it's available.",
+      "This solution is being prepared. Register your interest and we’ll contact you as soon as it’s available.",
     interest: "Register interest",
     discuss: "Discuss this solution",
     empty: "Solutions will be published here soon.",
@@ -198,7 +198,7 @@ const en = {
     eyebrow: "Contact",
     title: "Start a conversation.",
     intro:
-      "Tell us about your space or your idea. We'll get back to you with honest advice and a sensible next step.",
+      "Tell us about your space or your idea. We’ll get back to you with honest advice and a sensible next step.",
     formTitle: "Send us a message",
     directTitle: "Prefer to talk directly?",
     consultationTitle: "About consultations",
@@ -213,11 +213,11 @@ const en = {
     },
     projectOther: "Something else",
     projectPlaceholder: "Select a topic",
-    messagePlaceholder: "The space, what you'd like to improve, any timing or budget in mind…",
+    messagePlaceholder: "The space, what you’d like to improve, any timing or budget in mind…",
     methods: { whatsapp: "WhatsApp", phone: "Phone call", email: "Email" },
     submit: "Send message",
     sending: "Sending…",
-    success: "Thank you — your message has arrived. We'll be in touch soon.",
+    success: "Thank you — your message has arrived. We’ll be in touch soon.",
     successTitle: "Message received",
     another: "Send another message",
     privacy: "We only use your details to respond to your request.",
@@ -273,11 +273,11 @@ const en = {
     backToTop: "Back to top",
   },
   notFound: {
-    title: "This page doesn't exist — yet.",
-    text: "The page you're looking for may have moved. Let's get you back on track.",
+    title: "This page doesn’t exist — yet.",
+    text: "The page you’re looking for may have moved. Let’s get you back on track.",
     home: "Back to home",
   },
-  maintenance: { title: "We'll be right back." },
+  maintenance: { title: "We’ll be right back." },
   error: { title: "Something went wrong.", text: "Please try again in a moment.", retry: "Try again" },
 };
 
