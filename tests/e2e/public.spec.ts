@@ -11,6 +11,25 @@ test.describe("public website", () => {
     await ar.close();
   });
 
+  test("root redirect never leaks the server's own host (reverse proxy / Docker)", async ({ baseURL }) => {
+    // Behind Caddy/nginx the app sees its bind address (e.g. 0.0.0.0:3000); the public
+    // host arrives in the Host header. Every redirect must stay on the public host.
+    const internal = new URL(baseURL!).host;
+    for (const path of ["/", "/?utm_source=x", "/solutions"]) {
+      const res = await fetch(`${baseURL}${path}`, {
+        redirect: "manual",
+        headers: { host: "abcarino.example", "x-forwarded-proto": "https", "accept-language": "ar" },
+      });
+      expect(res.status, path).toBe(307);
+      const location = res.headers.get("location")!;
+      expect(location, path).not.toContain(internal);
+      const resolved = new URL(location, "https://abcarino.example");
+      expect(resolved.host, path).toBe("abcarino.example");
+      expect(resolved.pathname, path).toMatch(/^\/ar(\/solutions)?$/);
+      if (path.includes("utm")) expect(resolved.search, path).toBe("?utm_source=x");
+    }
+  });
+
   test("locale-less paths redirect", async ({ page }) => {
     await page.goto("/solutions");
     await expect(page).toHaveURL(/\/en\/solutions$/);

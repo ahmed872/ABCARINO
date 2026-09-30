@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     }
     locale = negotiateLocale(request.headers.get("accept-language"), fallback);
   }
-  const url = request.nextUrl.clone();
-  url.pathname = `/${locale}`;
-  return NextResponse.redirect(url, 307);
+  // Relative Location: behind a reverse proxy request.nextUrl carries the server's
+  // bind address (e.g. 0.0.0.0:3000 in Docker), not the public host.
+  return new NextResponse(null, { status: 307, headers: { Location: `/${locale}${request.nextUrl.search}` } });
 }

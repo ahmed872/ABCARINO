@@ -45,6 +45,10 @@ export type StoredImage = {
 };
 
 export async function storeImage(input: Buffer): Promise<StoredImage> {
+  // Vercel functions have no persistent (or writable) disk: local storage is not an option there.
+  if (process.env.VERCEL && !usesBlobStorage()) {
+    throw new UploadError("Media storage is not configured. Connect a Vercel Blob store (Storage → Blob), then redeploy.");
+  }
   if (input.byteLength === 0) throw new UploadError("The file is empty.");
   if (input.byteLength > MAX_UPLOAD_BYTES) throw new UploadError("The file is larger than 15 MB.");
 

@@ -71,4 +71,16 @@ describe("media storage — adversarial inputs (regression)", () => {
     const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><script>alert(1)</script><rect width="10" height="10"/></svg>');
     await expect(storeImage(svg)).rejects.toBeInstanceOf(UploadError);
   });
+  it("on Vercel without a Blob store, refuses uploads with an actionable message (no disk writes)", async () => {
+    const png = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#000" } }).png().toBuffer();
+    const before = await readdir(dir, { recursive: true });
+    process.env.VERCEL = "1";
+    try {
+      await expect(storeImage(png)).rejects.toThrow(/Vercel Blob/);
+      await expect(storeImage(png)).rejects.toBeInstanceOf(UploadError);
+    } finally {
+      delete process.env.VERCEL;
+    }
+    expect(await readdir(dir, { recursive: true })).toEqual(before);
+  });
 });

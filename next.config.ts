@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Self-hosted: in-memory data cache so restarts never resurrect stale content (see cache-handler.cjs).
   ...(process.env.VERCEL ? {} : { cacheHandler: path.join(process.cwd(), "cache-handler.cjs"), cacheMaxMemorySize: 0 }),
+  // The dynamic STORAGE_DIR path in src/lib/storage.ts makes the tracer copy local uploads
+  // (and a test file) into .next/standalone. Media must never ship inside the build.
+  outputFileTracingExcludes: { "/*": ["./storage/**/*", "./.e2e-storage/**/*", "./tests/**/*"] },
   poweredByHeader: false,
   reactStrictMode: true,
   experimental: {

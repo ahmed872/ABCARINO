@@ -1,14 +1,41 @@
 /**
- * Idempotent seed: inserts starter categories, solutions and packages only when
- * they don't exist yet (matched by slug), so it never overwrites admin edits.
+ * First-install seed. Starter categories, solutions and packages are inserted
+ * (atomically) only into an empty catalogue, and the first super admin only
+ * when no user exists. Safe to run on every deploy (Vercel's build does): it
+ * never overwrites admin edits, never re-creates content an admin deleted, and
+ * never creates a second admin after the first account's email was changed.
  */
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { closeDb, db } from "../src/lib/db";
-import { categories, packageSolutions, packages, solutions } from "../src/lib/db/schema";
+import { categories, packageSolutions, packages, solutions, users } from "../src/lib/db/schema";
 import { ensureSuperAdmin } from "./admin-lib";
 import { seedArticleCategories, seedCategories, seedPackages, seedSolutions } from "./seed-data";
 
+async function count(table: typeof categories | typeof solutions | typeof packages | typeof users): Promise<number> {
+  const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(table);
+  return row.n;
+}
+
 async function main() {
+  const existing = (await count(categories)) + (await count(solutions)) + (await count(packages));
+  if (existing > 0) {
+    console.log("Catalogue already initialised — starter content skipped (existing and deleted rows stay as the admins left them).");
+  } else {
+    await db.transaction(seedCatalogue);
+  }
+
+  if ((await count(users)) > 0) {
+    console.log("Admin accounts already exist — skipping admin creation (use `npm run admin:create` to add or reset one).");
+  } else if (process.env.ADMIN_EMAIL) {
+    await ensureSuperAdmin();
+  } else {
+    console.warn("ADMIN_EMAIL is not set — skipping admin creation. Set it and run `npm run admin:create`.");
+  }
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function seedCatalogue(db: Tx) {
   const catIds = new Map<string, string>();
 
   for (const [scope, list] of [
@@ -76,9 +103,7 @@ async function main() {
     }
   }
 
-  console.log(`Seeded ${catIds.size} categories, ${solIds.size} solutions, ${seedPackages.length} packages (existing rows untouched).`);
-  if (process.env.ADMIN_EMAIL) await ensureSuperAdmin();
-  else console.warn("ADMIN_EMAIL is not set — skipping admin creation. Set it and run `npm run admin:create`.");
+  console.log(`Seeded ${catIds.size} categories, ${solIds.size} solutions, ${seedPackages.length} packages.`);
 }
 
 main()

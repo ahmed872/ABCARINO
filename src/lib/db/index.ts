@@ -15,6 +15,20 @@ function createClient() {
   }
   // Transaction-mode poolers (PgBouncer, Supabase :6543, Neon "-pooler") don't support prepared statements.
   const pooled = /pgbouncer=true|:6543\/|-pooler\./.test(url) || process.env.DATABASE_PREPARE === "false";
+  try {
+    return connect(url, pooled);
+  } catch (err) {
+    // The driver's URL error carries the full string (password included) as `input`: never log it.
+    if ((err as { code?: string }).code === "ERR_INVALID_URL") {
+      throw new Error(
+        "DATABASE_URL is not a valid connection URL (postgres://user:password@host:5432/db). Characters such as / # @ ? % in the password must be URL-encoded.",
+      );
+    }
+    throw err;
+  }
+}
+
+function connect(url: string, pooled: boolean) {
   return postgres(url, {
     // Serverless instances each hold their own pool: keep it small there.
     max: Number(process.env.DATABASE_POOL_SIZE ?? (process.env.VERCEL ? 3 : 10)),
