@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+import { blobConfigured } from "./src/lib/blob-config";
 import { isHttpsProduction } from "./src/lib/site-url";
 
 const securityHeaders = [
@@ -31,7 +32,7 @@ const nextConfig: NextConfig = {
     ],
     // Media stored on Vercel Blob (see src/lib/storage.ts) — only allowed when a Blob store is configured,
     // otherwise the optimizer would proxy images from any Blob store.
-    remotePatterns: process.env.BLOB_READ_WRITE_TOKEN
+    remotePatterns: blobConfigured()
       ? [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/media/**" }]
       : [],
     deviceSizes: [640, 828, 1080, 1280, 1600, 1920, 2400],

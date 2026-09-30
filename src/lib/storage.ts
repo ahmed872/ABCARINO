@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { del, put } from "@vercel/blob";
+import { blobConfigured } from "@/lib/blob-config";
 import sharp, { type Metadata as SharpMetadata, type OutputInfo } from "sharp";
 import { sanitizeFilename } from "@/lib/utils";
 export { sanitizeFilename };
@@ -16,8 +17,8 @@ export { sanitizeFilename };
  * never touches the file system path.
  *
  * Two backends, chosen automatically:
- *  - Vercel Blob when BLOB_READ_WRITE_TOKEN is set (required on Vercel/serverless,
- *    whose filesystem is not persistent);
+ *  - Vercel Blob when a Blob store is connected (BLOB_STORE_ID or
+ *    BLOB_READ_WRITE_TOKEN) — required on Vercel, whose filesystem is not persistent;
  *  - local disk (STORAGE_DIR) otherwise — e.g. Docker with a volume.
  */
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
@@ -26,7 +27,7 @@ const ALLOWED_FORMATS = new Set(["jpeg", "png", "webp", "avif", "gif", "heif", "
 export const STORAGE_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/;
 
 export function usesBlobStorage(): boolean {
-  return !!process.env.BLOB_READ_WRITE_TOKEN;
+  return blobConfigured();
 }
 
 function mediaDir(): string {

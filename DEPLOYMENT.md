@@ -7,7 +7,7 @@ The recommended setup for a small team is **one VPS with Docker Compose**: the a
 The site needs a **PostgreSQL database** and, for uploaded images, **Vercel Blob** (Vercel's disk is not persistent). Without a database every page fails with a server error.
 
 1. **Database** — Vercel → your project → **Storage** → *Create / Connect Database* → **Neon (Postgres)**. This adds `DATABASE_URL` automatically. (Supabase or any Postgres works too: paste its connection string as `DATABASE_URL`.)
-2. **Images** — Storage → *Create* → **Blob**, with **public** access (the app stores images as public blobs; a private store rejects uploads). This adds `BLOB_READ_WRITE_TOKEN`. Without it, uploads are refused with "Media storage is not configured".
+2. **Images** — Storage → *Create* → **Blob**, with **public** access (the app stores images as public blobs; a private store rejects uploads). Connecting it adds `BLOB_STORE_ID` (the SDK then signs in with the deployment's OIDC token; older connections add `BLOB_READ_WRITE_TOKEN` instead — either works). Without it, uploads are refused with "Media storage is not configured".
 3. **Environment variables** (Settings → Environment Variables, for *Production*):
    - `APP_SECRET` — a long random string (`openssl rand -base64 48`)
    - `ADMIN_EMAIL` — the first admin's email
@@ -141,7 +141,7 @@ Migrations run in a single transaction: if one fails, nothing is applied and the
 ## Scaling notes
 
 - Self-hosting supports **one app instance**. Besides uploaded media (volume `media`), each process keeps in memory the **public-content cache** (`cache-handler.cjs`: an admin edit only clears the cache of the instance that handled it) and the **rate limiter / sign-in failure counter**. For more than one instance: shared media storage (S3/R2 via `src/lib/storage.ts`, or Vercel Blob), a shared cache handler, and a Redis/Postgres rate limiter (same interface in `src/lib/security/rate-limit.ts`).
-- On Vercel, media goes to Vercel Blob automatically when `BLOB_READ_WRITE_TOKEN` is set.
+- On Vercel, media goes to Vercel Blob automatically when a Blob store is connected (`BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN`).
 - Scheduled articles use server time; the image sets `TZ=Africa/Cairo`.
 
 ## Operations

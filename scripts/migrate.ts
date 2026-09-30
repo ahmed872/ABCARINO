@@ -1,6 +1,7 @@
 /* Applies pending SQL migrations from ./drizzle. Safe to run on every deploy. */
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { closeDb, db } from "../src/lib/db";
+import { blobConfigured } from "../src/lib/blob-config";
 import { env } from "../src/lib/env";
 
 /**
@@ -18,8 +19,8 @@ function checkProductionEnv() {
   if (!env().APP_URL.startsWith("https://")) {
     console.warn("Warning: APP_URL is not https:// — secure cookies and HSTS stay off.");
   }
-  if (process.env.VERCEL && !process.env.BLOB_READ_WRITE_TOKEN) {
-    console.warn("Warning: BLOB_READ_WRITE_TOKEN is not set — media uploads fail until a Vercel Blob store is connected.");
+  if (process.env.VERCEL && !blobConfigured()) {
+    console.warn("Warning: no Vercel Blob store is connected — media uploads fail until one is (Storage → Blob).");
   }
 }
 

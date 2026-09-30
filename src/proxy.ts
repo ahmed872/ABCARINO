@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isLocale, LOCALE_COOKIE, negotiateLocale } from "@/lib/i18n/config";
 import { sessionCookieName } from "@/lib/auth/cookie";
+import { blobConfigured } from "@/lib/blob-config";
 import { isHttpsProduction } from "@/lib/site-url";
 
 /**
@@ -20,7 +21,7 @@ function buildCsp(nonce: string): string {
     // Inline style attributes are used by React/SVG; scripts remain nonce-locked.
     "style-src 'self' 'unsafe-inline'",
     // Uploaded media lives on Vercel Blob only when a Blob store is configured.
-    `img-src 'self' blob: data:${process.env.BLOB_READ_WRITE_TOKEN ? " https://*.public.blob.vercel-storage.com" : ""}`,
+    `img-src 'self' blob: data:${blobConfigured() ? " https://*.public.blob.vercel-storage.com" : ""}`,
     "font-src 'self'",
     "connect-src 'self'",
     "media-src 'self'",

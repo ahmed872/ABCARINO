@@ -50,7 +50,13 @@ describe("CSP image sources", () => {
   it("only allows Vercel Blob images when a Blob store is configured", () => {
     vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
     expect(run("http://localhost/en").headers.get("content-security-policy")).toContain("img-src 'self' blob: data:;");
+    vi.stubEnv("BLOB_STORE_ID", "");
+    expect(run("http://localhost/en").headers.get("content-security-policy")).toContain("img-src 'self' blob: data:;");
     vi.stubEnv("BLOB_READ_WRITE_TOKEN", "vercel_blob_rw_test");
+    expect(run("http://localhost/en").headers.get("content-security-policy")).toContain("https://*.public.blob.vercel-storage.com");
+    // Newer Vercel Blob connections provide only the store ID (OIDC auth), no read-write token.
+    vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
+    vi.stubEnv("BLOB_STORE_ID", "store_abc123");
     expect(run("http://localhost/en").headers.get("content-security-policy")).toContain("https://*.public.blob.vercel-storage.com");
   });
 });

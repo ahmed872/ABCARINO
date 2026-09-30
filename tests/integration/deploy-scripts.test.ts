@@ -114,7 +114,10 @@ describe("deployment scripts", () => {
     // Vercel: APP_URL may be omitted (the production domain is used) but a missing Blob store is flagged.
     const vercel = run("migrate", { ...prod, VERCEL: "1", VERCEL_PROJECT_PRODUCTION_URL: "abcarino.vercel.app", APP_SECRET: SECRET });
     expect(vercel.code).toBe(0);
-    expect(vercel.out).toContain("BLOB_READ_WRITE_TOKEN is not set");
+    expect(vercel.out).toContain("no Vercel Blob store is connected");
+    const vercelBlob = run("migrate", { ...prod, VERCEL: "1", VERCEL_PROJECT_PRODUCTION_URL: "abcarino.vercel.app", APP_SECRET: SECRET, BLOB_STORE_ID: "store_test123" });
+    expect(vercelBlob.code).toBe(0);
+    expect(vercelBlob.out).not.toContain("no Vercel Blob store");
     const ok = run("migrate", { ...prod, APP_SECRET: SECRET, APP_URL: "https://abcarino.com" });
     expect(ok.code).toBe(0);
     expect(ok.out).not.toContain(SECRET);

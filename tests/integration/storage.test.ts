@@ -83,4 +83,19 @@ describe("media storage — adversarial inputs (regression)", () => {
     }
     expect(await readdir(dir, { recursive: true })).toEqual(before);
   });
+  it("treats a store-ID-only Vercel Blob connection (OIDC) as configured", async () => {
+    const { usesBlobStorage } = await import("@/lib/storage");
+    const saved = { token: process.env.BLOB_READ_WRITE_TOKEN, id: process.env.BLOB_STORE_ID };
+    delete process.env.BLOB_READ_WRITE_TOKEN;
+    try {
+      delete process.env.BLOB_STORE_ID;
+      expect(usesBlobStorage()).toBe(false);
+      process.env.BLOB_STORE_ID = "store_abc123";
+      expect(usesBlobStorage()).toBe(true);
+    } finally {
+      if (saved.id === undefined) delete process.env.BLOB_STORE_ID;
+      else process.env.BLOB_STORE_ID = saved.id;
+      if (saved.token !== undefined) process.env.BLOB_READ_WRITE_TOKEN = saved.token;
+    }
+  });
 });
