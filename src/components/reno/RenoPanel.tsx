@@ -20,12 +20,40 @@ export type RenoMessage =
 
 const GREETING: RenoMessage[] = [{ id: 1, from: "reno", kind: "greeting" }];
 
+const isId = (v: unknown) => typeof v === "string" && v.length < 60;
+const isIdList = (v: unknown) => Array.isArray(v) && v.length <= 5 && v.every(isId);
+
+/** Session data can be stale or tampered with: keep only well-formed messages. */
+function isMessage(m: unknown): m is RenoMessage {
+  if (!m || typeof m !== "object") return false;
+  const x = m as Record<string, unknown>;
+  if (typeof x.id !== "number" || !Number.isFinite(x.id)) return false;
+  if (x.from === "user") return typeof x.text === "string" && x.text.length <= 200;
+  if (x.from !== "reno") return false;
+  const quipOk = x.quip === undefined || (typeof x.quip === "string" && x.quip.length <= 200);
+  switch (x.kind) {
+    case "greeting":
+      return true;
+    case "answer":
+      return isId(x.faqId) && isIdList(x.suggestionIds) && quipOk;
+    case "suggest":
+      return isIdList(x.suggestionIds);
+    case "unknown":
+      return quipOk;
+    default:
+      return false;
+  }
+}
+
 function loadChat(locale: RenoLocale): RenoMessage[] {
   const raw = readSession(`${RENO_CONFIG.storage.chat}:${locale}`);
   if (!raw) return GREETING;
   try {
-    const parsed = JSON.parse(raw) as RenoMessage[];
-    return Array.isArray(parsed) && parsed.length ? parsed.slice(-60) : GREETING;
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return GREETING;
+    const valid = parsed.filter(isMessage).slice(-60);
+    const ids = new Set(valid.map((m) => m.id));
+    return valid.length && ids.size === valid.length ? valid : GREETING;
   } catch {
     return GREETING;
   }
@@ -54,8 +82,10 @@ export function RenoPanel({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
+  const nextId = useRef(Math.max(0, ...messages.map((m) => m.id)) + 1);
 
   useEffect(() => {
     writeSession(`${RENO_CONFIG.storage.chat}:${locale}`, JSON.stringify(messages));
@@ -64,7 +94,9 @@ export function RenoPanel({
   }, [messages, locale, busy, showTopics]);
 
   useEffect(() => {
-    inputRef.current?.focus({ preventScroll: true });
+    // On touch screens focusing the input would pop the keyboard over the suggestions.
+    if (window.matchMedia("(pointer: coarse)").matches) panelRef.current?.focus({ preventScroll: true });
+    else inputRef.current?.focus({ preventScroll: true });
     const list = timers.current;
     return () => list.forEach((h) => window.clearTimeout(h));
   }, []);
@@ -74,8 +106,9 @@ export function RenoPanel({
   }
 
   function respond(userText: string, forcedId?: string) {
-    const nextId = (messages.at(-1)?.id ?? 0) + 1;
-    const userMsg: RenoMessage = { id: nextId, from: "user", text: userText };
+    const userId = nextId.current++;
+    const replyId = nextId.current++;
+    const userMsg: RenoMessage = { id: userId, from: "user", text: userText };
     setMessages((m) => [...m, userMsg]);
     setShowTopics(false);
     setBusy(true);
@@ -89,22 +122,22 @@ export function RenoPanel({
         const related = (result.entry.related ?? []).filter((r) => r !== result.entry.id);
         const extra = result.suggestions.map((s) => s.id).filter((s) => !related.includes(s));
         reply = {
-          id: nextId + 1,
+          id: replyId,
           from: "reno",
           kind: "answer",
           faqId: result.entry.id,
-          quip: result.entry.hidden ? undefined : pick(t.quips.found, nextId),
+          quip: result.entry.hidden ? undefined : pick(t.quips.found, userId),
           suggestionIds: [...related, ...extra].slice(0, 3),
         };
         onMood("solving");
         later(() => onMood("hello"), 700);
         later(() => onMood("chill"), 2600);
       } else if (result.kind === "suggest") {
-        reply = { id: nextId + 1, from: "reno", kind: "suggest", suggestionIds: result.suggestions.map((s) => s.id) };
+        reply = { id: replyId, from: "reno", kind: "suggest", suggestionIds: result.suggestions.map((s) => s.id) };
         onMood("really");
         later(() => onMood("chill"), 2600);
       } else {
-        reply = { id: nextId + 1, from: "reno", kind: "unknown", quip: pick(t.quips.unknown, nextId) };
+        reply = { id: replyId, from: "reno", kind: "unknown", quip: pick(t.quips.unknown, userId) };
         onMood("whoa");
         later(() => onMood("really"), 1400);
         later(() => onMood("chill"), 3200);
@@ -130,6 +163,7 @@ export function RenoPanel({
   function restart() {
     timers.current.forEach((h) => window.clearTimeout(h));
     setBusy(false);
+    nextId.current = 2;
     setMessages(GREETING);
     setShowTopics(true);
     onMood("hello");
@@ -177,7 +211,7 @@ export function RenoPanel({
   const topicEntries = RENO_FAQ.filter((f) => f.category === category && !f.hidden);
 
   return (
-    <section id={id} className="reno-panel" role="dialog" aria-modal="false" aria-label={t.panelLabel}>
+    <section id={id} ref={panelRef} tabIndex={-1} className="reno-panel" role="dialog" aria-modal="false" aria-label={t.panelLabel}>
       <header>
         <div className="reno-head-avatar" aria-hidden="true">
           <RenoArt variant="avatar" mood={busy ? "sip" : "chill"} />

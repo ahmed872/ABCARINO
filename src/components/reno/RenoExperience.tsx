@@ -46,6 +46,7 @@ export default function RenoExperience({ locale, t, whatsapp, stackAboveWhatsApp
           locale={locale}
           t={t.intro}
           reduced={reduced}
+          stackAboveWhatsApp={stackAboveWhatsApp}
           onDone={(how) => {
             writeSession(RENO_CONFIG.storage.intro, how);
             setArrived(true);

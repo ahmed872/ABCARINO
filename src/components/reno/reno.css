@@ -55,20 +55,22 @@
 @keyframes reno-pop { from { transform: scale(0.08); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 /* ── Companion dock ───────────────────────────────────────────────────── */
-.reno-dock {
+.reno-root {
   --reno-gap: 20px;
   --reno-size: 64px;
   --reno-bottom: max(var(--reno-gap), env(safe-area-inset-bottom, 0px));
-  position: fixed;
-  right: max(var(--reno-gap), env(safe-area-inset-right, 0px));
-  bottom: var(--reno-bottom);
-  /* Above the sticky header (z-50) so the panel is never cut off; below the skip link (60) and the intro (80). */
-  z-index: 55;
   font-family: inherit;
 }
 /* Below lg the WhatsApp button sits at the inline end; in LTR that is the same corner: stack above it. */
 @media (max-width: 1023.98px) {
-  html[dir="ltr"] .reno-dock[data-stack="true"] { --reno-bottom: calc(max(var(--reno-gap), env(safe-area-inset-bottom, 0px)) + 68px); }
+  html[dir="ltr"] .reno-root[data-stack="true"] { --reno-bottom: calc(max(var(--reno-gap), env(safe-area-inset-bottom, 0px)) + 68px); }
+}
+.reno-dock {
+  position: fixed;
+  right: max(var(--reno-gap), env(safe-area-inset-right, 0px));
+  bottom: var(--reno-bottom);
+  /* Under the mobile menu (40) and the sticky header (50); the open panel has its own layer. */
+  z-index: 39;
 }
 .reno-launch {
   position: relative;
@@ -119,8 +121,11 @@ html[dir="rtl"] .reno-bubble { border-radius: 14px 14px 14px 4px; }
 @keyframes reno-bubble-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* ── Panel ────────────────────────────────────────────────────────────── */
+.reno-panel:focus { outline: none; }
 .reno-panel {
   position: fixed;
+  /* Above the sticky header (50) so it is never cut off; below the skip link (60) and the intro (80). */
+  z-index: 55;
   right: max(16px, env(safe-area-inset-right, 0px));
   bottom: calc(var(--reno-bottom) + var(--reno-size) + 12px);
   width: min(390px, calc(100vw - 32px));

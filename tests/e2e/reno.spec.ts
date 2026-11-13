@@ -200,6 +200,79 @@ test.describe("RENO companion & FAQ", () => {
     await ctx.close();
   });
 
+  test("survives corrupted or tampered session data", async ({ page }) => {
+    const errors = errorsOf(page);
+    await page.addInitScript(() => {
+      sessionStorage.setItem(
+        "reno:chat:en",
+        JSON.stringify([
+          { id: 1, from: "reno", kind: "answer", faqId: "about" }, // missing suggestionIds
+          { id: "x", from: "user", text: "<b>hi</b>" },
+          { id: 2, from: "reno", kind: "answer", faqId: "does-not-exist", suggestionIds: ["nope"] },
+          { id: 3, from: "user", text: { evil: true } },
+          null,
+        ]),
+      );
+      sessionStorage.setItem("reno:chat:ar", "{not json");
+    });
+    for (const path of ["/en", "/ar"]) {
+      await page.goto(path);
+      await launcher(page).click();
+      await expect(page.locator(".reno-panel")).toBeVisible();
+      await page.getByRole("textbox").fill("home cinema");
+      await page.getByRole("textbox").press("Enter");
+      await expect(page.locator('[data-faq="home-cinema"]')).toBeVisible();
+    }
+    expect(errors).toEqual([]);
+  });
+
+  test("if RENO's code fails to load, he disappears and the page stays", async ({ page }) => {
+    // Simulates a flaky network / blocked script: abort the lazily loaded chunk that contains RENO.
+    await page.route("**/_next/static/chunks/*.js", async (route) => {
+      const res = await route.fetch();
+      const body = await res.text();
+      if (body.includes("reno-launch")) return route.abort("failed");
+      return route.fulfill({ response: res, body });
+    });
+    await page.goto("/en");
+    await expect(page.locator("main h1")).toBeVisible();
+    await page.waitForTimeout(2000);
+    await expect(launcher(page)).toHaveCount(0);
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.getByText("Something went wrong.")).toHaveCount(0);
+    await expect(page.getByText("We’ll be right back.")).toHaveCount(0);
+  });
+
+  test("treats typed HTML as plain text", async ({ page }) => {
+    let dialog = false;
+    page.on("dialog", (d) => { dialog = true; void d.dismiss(); });
+    await page.goto("/en");
+    await launcher(page).click();
+    const payload = '<img src=x onerror="alert(1)"><script>alert(2)</script>';
+    await page.getByRole("textbox").fill(payload);
+    await page.getByRole("textbox").press("Enter");
+    await expect(page.locator('.reno-msg[data-from="user"]').last()).toContainText(payload);
+    expect(await page.locator(".reno-panel img, .reno-panel script").count()).toBe(0);
+    expect(dialog).toBe(false);
+  });
+
+  test("touch: the open mobile menu covers RENO, and opening the panel doesn't pop the keyboard", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto("/en");
+    await expect(launcher(page)).toBeVisible();
+    await page.getByRole("button", { name: /menu/i }).first().click();
+    const box = (await launcher(page).boundingBox())!;
+    const topmost = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest(".reno-launch") !== null, [box.x + box.width / 2, box.y + box.height / 2]);
+    expect(topmost).toBe(false);
+    await page.goto("/en/about");
+    await launcher(page).tap();
+    await expect(page.locator(".reno-panel")).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Ask RENO a question" })).not.toBeFocused();
+    await expect(page.locator(".reno-panel")).toBeFocused();
+    await ctx.close();
+  });
+
   test("the FAQ page lists every visible question for search engines", async ({ page }) => {
     await page.goto("/en/faq");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Questions & answers");

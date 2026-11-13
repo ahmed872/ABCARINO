@@ -26,9 +26,11 @@ export function RenoIntro({
   locale,
   t,
   reduced,
+  stackAboveWhatsApp,
   onDone,
 }: {
   locale: RenoLocale;
+  stackAboveWhatsApp: boolean;
   t: Dictionary["reno"]["intro"];
   reduced: boolean;
   onDone: (how: "seen" | "skipped") => void;
@@ -91,8 +93,9 @@ export function RenoIntro({
         const hero = heroRef.current;
         if (hero) {
           const r = hero.getBoundingClientRect();
+          const stacked = stackAboveWhatsApp && locale !== "ar" && window.innerWidth < 1024;
           const targetX = window.innerWidth - 20 - 32;
-          const targetY = window.innerHeight - 20 - 32;
+          const targetY = window.innerHeight - 20 - 32 - (stacked ? 68 : 0);
           hero.style.transform = `translate(${targetX - (r.left + r.width / 2)}px, ${targetY - (r.top + r.height / 2)}px) scale(0.14)`;
         }
         setScene("reveal");

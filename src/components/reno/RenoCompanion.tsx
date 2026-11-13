@@ -80,29 +80,31 @@ export function RenoCompanion({
   const shownMood: RenoMood = hover && mood === "chill" && !open ? "hello" : mood;
 
   return (
-    <div className="reno-dock" data-stack={stackAboveWhatsApp ? "true" : "false"} lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
-      {bubble && !open ? (
-        <div className="reno-bubble" onClick={toggle} aria-hidden="true">
-          {bubble}
+    <div className="reno-root" data-stack={stackAboveWhatsApp ? "true" : "false"} lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
+      <div className="reno-dock">
+        {bubble && !open ? (
+          <div className="reno-bubble" onClick={toggle} aria-hidden="true">
+            {bubble}
+          </div>
+        ) : null}
+        <div className="reno-float">
+          <button
+            ref={buttonRef}
+            type="button"
+            className="reno-launch"
+            data-arriving={arriving ? "true" : "false"}
+            aria-label={open ? t.close : t.open}
+            aria-expanded={open}
+            aria-controls={open ? panelId : undefined}
+            onClick={toggle}
+            onPointerEnter={(e) => e.pointerType === "mouse" && setHover(true)}
+            onPointerLeave={() => setHover(false)}
+            onFocus={() => setHover(true)}
+            onBlur={() => setHover(false)}
+          >
+            <RenoArt variant="avatar" mood={shownMood} />
+          </button>
         </div>
-      ) : null}
-      <div className="reno-float">
-        <button
-          ref={buttonRef}
-          type="button"
-          className="reno-launch"
-          data-arriving={arriving ? "true" : "false"}
-          aria-label={open ? t.close : t.open}
-          aria-expanded={open}
-          aria-controls={open ? panelId : undefined}
-          onClick={toggle}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
-          onFocus={() => setHover(true)}
-          onBlur={() => setHover(false)}
-        >
-          <RenoArt variant="avatar" mood={shownMood} />
-        </button>
       </div>
       {open ? <RenoPanel id={panelId} locale={locale} t={t} whatsapp={whatsapp} onClose={close} onMood={setMood} /> : null}
     </div>
