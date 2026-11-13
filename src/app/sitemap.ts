@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/solutions", priority: 0.9 },
     { path: "/about", priority: 0.7 },
     { path: "/contact", priority: 0.8 },
+    { path: "/faq", priority: 0.6 },
     ...solutions
       .filter((x) => x.status === "available" || s.showComingSoon)
       .map((x) => ({ path: `/solutions/${x.slug}`, lastModified: x.updatedAt, priority: x.status === "available" ? 0.8 : 0.5 })),

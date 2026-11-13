@@ -1,0 +1,261 @@
+/*
+ * RENO — character expressions, idle motion, companion dock/panel and the arrival intro.
+ * Loaded only with the lazily imported RENO chunk. All motion is disabled under
+ * prefers-reduced-motion; expressions still change (they are opacity swaps).
+ */
+
+/* ── Character (art.ts layers) ───────────────────────────────────────── */
+.reno-art { display: block; overflow: visible; }
+.reno-art .reno-alt { opacity: 0; }
+.reno-art [class*="r-"] { transition: opacity 0.16s ease; }
+
+/* arms per mood */
+.reno-art:is([data-mood="chill"], [data-mood="really"], [data-mood="sip"], [data-mood="solving"]) .r-arm-wave { opacity: 0; }
+.reno-art:is([data-mood="chill"], [data-mood="really"], [data-mood="sip"], [data-mood="solving"]) .r-arm-rest { opacity: 1; }
+.reno-art[data-mood="sip"] .r-arm-tea { opacity: 0; }
+.reno-art[data-mood="sip"] .r-arm-sip,
+.reno-art[data-mood="hello"] .r-wave-lines { opacity: 1; }
+/* faces per mood */
+.reno-art[data-mood="hello"] :is(.r-eyes, .r-mouth) { opacity: 0; }
+.reno-art[data-mood="hello"] :is(.r-eyes-happy, .r-mouth-grin) { opacity: 1; }
+.reno-art[data-mood="really"] .r-brows { opacity: 0; }
+.reno-art[data-mood="really"] :is(.r-lid-wink, .r-brow-r-up, .r-brow-l-down) { opacity: 1; }
+.reno-art[data-mood="whoa"] :is(.r-eyes, .r-mouth, .r-brows) { opacity: 0; }
+.reno-art[data-mood="whoa"] :is(.r-eyes-wide, .r-mouth-o, .r-brows-up, .r-shock, .r-sweat) { opacity: 1; }
+.reno-art[data-mood="sip"] .r-eyes { opacity: 0; }
+.reno-art[data-mood="sip"] .r-eyes-closed { opacity: 1; }
+.reno-art[data-mood="solving"] .r-solve { opacity: 1; }
+.reno-art[data-mood="solving"] .pupil { r: 9px; }
+.reno-art[data-mood="solving"] .cup-ring { stroke-width: 6px; }
+/* head-and-shoulders avatar */
+.reno-art[data-variant="avatar"] :is(.r-legs, .r-arm-tea, .r-arm-wave, .r-arm-rest, .r-arm-sip, .r-wave-lines, .r-solve) { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reno-art :is(.r-antenna, .r-eyes, .r-eyes-wide, .r-headgroup, .r-body, .r-hand, .r-arm-tea, .r-solve) { transform-box: view-box; }
+  .reno-art .r-antenna { transform-origin: 200px 66px; animation: reno-sway 3.2s ease-in-out infinite; }
+  .reno-art :is(.r-eyes, .r-eyes-wide) { transform-origin: 200px 192px; animation: reno-blink 5.5s infinite; }
+  .reno-art .r-headgroup { animation: reno-bob 4s ease-in-out infinite; }
+  .reno-art .r-body { transform-origin: 200px 480px; animation: reno-breathe 4s ease-in-out infinite; }
+  .reno-art .r-steam path { transform-box: fill-box; animation: reno-steam 2.6s ease-out infinite; }
+  .reno-art .r-steam path + path { animation-delay: 1.3s; }
+  .reno-art[data-mood="chill"] .r-arm-tea { transform-origin: 124px 320px; animation: reno-lift 9s ease-in-out infinite; }
+  .reno-art:is([data-mood="hello"], [data-mood="whoa"]) .r-hand { transform-origin: 338px 278px; animation: reno-wave 1.6s ease-in-out infinite; }
+  .reno-art[data-mood="solving"] .cup-ring { animation: reno-pulse 0.9s ease-in-out infinite alternate; }
+  .reno-art[data-mood="solving"] .r-solve { transform-origin: 227px 336px; animation: reno-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); }
+  .reno-art[data-mood="whoa"] .r-shock { animation: reno-pulse 0.5s ease-in-out infinite alternate; }
+}
+@keyframes reno-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+@keyframes reno-blink { 0%, 93%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.08); } }
+@keyframes reno-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(1.8px); } }
+@keyframes reno-breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.01); } }
+@keyframes reno-steam { 0% { transform: translateY(6px); opacity: 0; } 30% { opacity: 0.6; } 100% { transform: translateY(-14px); opacity: 0; } }
+@keyframes reno-lift { 0%, 80%, 100% { transform: rotate(0); } 86%, 92% { transform: rotate(-4deg) translateY(-6px); } }
+@keyframes reno-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(14deg); } 50% { transform: rotate(-8deg); } 75% { transform: rotate(12deg); } }
+@keyframes reno-pulse { from { opacity: 0.55; } to { opacity: 1; } }
+@keyframes reno-pop { from { transform: scale(0.08); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ── Companion dock ───────────────────────────────────────────────────── */
+.reno-dock {
+  --reno-gap: 20px;
+  --reno-size: 64px;
+  --reno-bottom: max(var(--reno-gap), env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  right: max(var(--reno-gap), env(safe-area-inset-right, 0px));
+  bottom: var(--reno-bottom);
+  /* Above the sticky header (z-50) so the panel is never cut off; below the skip link (60) and the intro (80). */
+  z-index: 55;
+  font-family: inherit;
+}
+/* Below lg the WhatsApp button sits at the inline end; in LTR that is the same corner: stack above it. */
+@media (max-width: 1023.98px) {
+  html[dir="ltr"] .reno-dock[data-stack="true"] { --reno-bottom: calc(max(var(--reno-gap), env(safe-area-inset-bottom, 0px)) + 68px); }
+}
+.reno-launch {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  width: var(--reno-size);
+  height: var(--reno-size);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 91, 31, 0.45);
+  background: radial-gradient(120% 120% at 30% 20%, #1d2230 0%, #0b0e17 70%);
+  box-shadow: 0 10px 30px -10px rgba(255, 91, 31, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.reno-launch .reno-art { width: 100%; height: auto; }
+.reno-launch:hover, .reno-launch:focus-visible { border-color: rgba(255, 91, 31, 0.9); box-shadow: 0 12px 36px -8px rgba(255, 91, 31, 0.75); }
+.reno-launch:focus-visible { outline: 2px solid #ffc98a; outline-offset: 3px; }
+.reno-launch[data-arriving="true"] { animation: reno-arrive 0.5s cubic-bezier(0.2, 1.3, 0.4, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  .reno-float { animation: reno-float 4.5s ease-in-out infinite; }
+  .reno-launch:hover { transform: translateY(-2px) scale(1.04); }
+}
+@keyframes reno-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes reno-arrive { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.reno-bubble {
+  position: absolute;
+  right: calc(var(--reno-size) + 12px);
+  bottom: 14px;
+  width: max-content;
+  max-width: min(230px, calc(100vw - var(--reno-size) - 56px));
+  padding: 10px 14px;
+  border-radius: 14px 14px 4px 14px;
+  background: rgba(21, 25, 34, 0.92);
+  border: 1px solid rgba(255, 91, 31, 0.35);
+  color: #fff;
+  font-size: 13.5px;
+  line-height: 1.45;
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+html[dir="rtl"] .reno-bubble { border-radius: 14px 14px 14px 4px; }
+@media (prefers-reduced-motion: no-preference) {
+  .reno-bubble { animation: reno-bubble-in 0.3s ease-out; }
+}
+@keyframes reno-bubble-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── Panel ────────────────────────────────────────────────────────────── */
+.reno-panel {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--reno-bottom) + var(--reno-size) + 12px);
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(620px, calc(100dvh - var(--reno-bottom) - var(--reno-size) - 28px - env(safe-area-inset-top, 0px)));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  background: rgba(21, 25, 34, 0.94);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 80px -24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 91, 31, 0.12), 0 0 60px -30px rgba(255, 91, 31, 0.5);
+  color: #fff;
+  font-size: 14.5px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reno-panel { animation: reno-panel-in 0.24s cubic-bezier(0.2, 0.9, 0.3, 1); transform-origin: bottom right; }
+}
+@keyframes reno-panel-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+.reno-panel header { display: flex; align-items: center; gap: 12px; padding: 14px 14px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); background: linear-gradient(180deg, rgba(255, 91, 31, 0.1), transparent); }
+.reno-panel .reno-head-avatar { width: 44px; height: 44px; flex: none; border-radius: 999px; overflow: hidden; background: #0b0e17; border: 1px solid rgba(255, 91, 31, 0.5); display: grid; place-items: end center; }
+.reno-panel .reno-head-avatar .reno-art { width: 100%; height: auto; }
+.reno-panel h2 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+.reno-panel .reno-sub { margin: 0; font-size: 12px; color: rgba(230, 230, 230, 0.6); }
+.reno-icon-btn { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; border: 0; background: transparent; color: rgba(255, 255, 255, 0.7); cursor: pointer; }
+.reno-icon-btn:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.reno-icon-btn:focus-visible, .reno-chip:focus-visible, .reno-action:focus-visible, .reno-send:focus-visible, .reno-skip:focus-visible { outline: 2px solid #ffc98a; outline-offset: 2px; }
+
+.reno-log { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.reno-msg { max-width: 88%; padding: 10px 13px; border-radius: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.reno-msg[data-from="reno"] { align-self: flex-start; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.06); border-start-start-radius: 4px; }
+.reno-msg[data-from="user"] { align-self: flex-end; background: #ff5b1f; color: #fff; border-end-end-radius: 4px; }
+.reno-quip { display: block; margin-bottom: 4px; font-size: 12.5px; color: #ffc98a; }
+.reno-msg p { margin: 0; }
+.reno-msg .reno-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.reno-action { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: rgba(255, 91, 31, 0.16); border: 1px solid rgba(255, 91, 31, 0.5); color: #fff; font-size: 13px; text-decoration: none; }
+.reno-action:hover { background: rgba(255, 91, 31, 0.28); }
+.reno-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.reno-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font: inherit; font-size: 13px; line-height: 1.35; text-align: start; cursor: pointer; }
+.reno-chip:hover { border-color: rgba(255, 91, 31, 0.7); background: rgba(255, 91, 31, 0.1); }
+.reno-chip[aria-pressed="true"] { border-color: #ff5b1f; color: #ffc98a; }
+.reno-label { margin: 2px 0 8px; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(230, 230, 230, 0.55); }
+html[dir="rtl"] .reno-label { letter-spacing: 0; text-transform: none; }
+.reno-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; scrollbar-width: thin; }
+.reno-tabs .reno-chip { flex: none; }
+.reno-typing { display: inline-flex; gap: 4px; padding: 4px 2px; }
+.reno-typing span { width: 6px; height: 6px; border-radius: 99px; background: rgba(255, 201, 138, 0.8); }
+@media (prefers-reduced-motion: no-preference) {
+  .reno-typing span { animation: reno-dot 1s ease-in-out infinite; }
+  .reno-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .reno-typing span:nth-child(3) { animation-delay: 0.3s; }
+}
+@keyframes reno-dot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+.reno-form { display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px) * 0); border-top: 1px solid rgba(255, 255, 255, 0.07); background: rgba(11, 14, 23, 0.6); }
+.reno-form input { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); color: #fff; font: inherit; font-size: 16px; }
+.reno-form input::placeholder { color: rgba(230, 230, 230, 0.45); }
+.reno-form input:focus { outline: none; border-color: rgba(255, 91, 31, 0.8); }
+.reno-send { padding: 0 16px; border-radius: 12px; border: 0; background: #ff5b1f; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.reno-send:disabled { opacity: 0.45; cursor: default; }
+.reno-foot { display: flex; justify-content: space-between; gap: 8px; padding: 0 14px 10px; font-size: 12px; background: rgba(11, 14, 23, 0.6); }
+.reno-foot a, .reno-foot button { color: rgba(230, 230, 230, 0.6); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.reno-foot a:hover, .reno-foot button:hover { color: #fff; }
+
+/* ── Intro ────────────────────────────────────────────────────────────── */
+.reno-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: radial-gradient(80% 70% at 50% 45%, #1a1e2e 0%, #0b0e17 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease, background-color 0.6s ease;
+}
+.reno-intro[data-scene]:not([data-scene="out"]) { opacity: 1; }
+.reno-intro[data-scene="arrive"], .reno-intro[data-scene="reveal"] { background: radial-gradient(80% 70% at 50% 50%, #241811 0%, #0e0f11 70%); }
+.reno-intro[data-scene="reveal"] { background: transparent; transition: background 0.6s ease; }
+.reno-stars, .reno-stars::after { position: absolute; inset: -50%; background-image: radial-gradient(1px 1px at 20px 30px, #fff, transparent), radial-gradient(1px 1px at 120px 80px, rgba(255, 255, 255, 0.8), transparent), radial-gradient(1.5px 1.5px at 200px 160px, #ffc98a, transparent), radial-gradient(1px 1px at 60px 200px, rgba(255, 255, 255, 0.7), transparent), radial-gradient(1px 1px at 260px 40px, rgba(255, 255, 255, 0.6), transparent); background-size: 300px 240px; opacity: 0.55; }
+.reno-stars::after { content: ""; inset: 0; background-size: 190px 170px; opacity: 0.4; }
+.reno-intro[data-scene="arrive"] .reno-stars, .reno-intro[data-scene="reveal"] .reno-stars { opacity: 0; transition: opacity 0.6s ease; }
+.reno-hud { position: absolute; top: max(28px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; font-family: var(--font-mono, ui-monospace, monospace); letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; color: rgba(255, 201, 138, 0.9); text-align: center; width: max-content; max-width: calc(100vw - 32px); }
+.reno-hud .reno-year { font-size: clamp(28px, 6vw, 52px); letter-spacing: 0.08em; color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 0 24px rgba(255, 91, 31, 0.6); }
+.reno-hud .reno-route { display: flex; gap: 14px; align-items: center; opacity: 0; transition: opacity 0.4s ease; }
+.reno-intro:is([data-scene="open"], [data-scene="travel"], [data-scene="arrive"]) .reno-hud .reno-route { opacity: 1; }
+.reno-hud .reno-bar { width: min(260px, 50vw); height: 2px; background: rgba(255, 255, 255, 0.15); position: relative; overflow: hidden; }
+.reno-hud .reno-bar i { position: absolute; inset: 0; background: #ff5b1f; transform-origin: left; transform: scaleX(0); transition: transform 1.3s linear; }
+html[dir="rtl"] .reno-hud .reno-bar i { transform-origin: right; }
+.reno-intro:is([data-scene="travel"], [data-scene="arrive"], [data-scene="reveal"]) .reno-hud .reno-bar i { transform: scaleX(1); }
+.reno-intro[data-scene="reveal"] .reno-hud { opacity: 0; transition: opacity 0.3s ease; }
+
+.reno-stage { position: relative; width: min(560px, 92vw); aspect-ratio: 1; display: grid; place-items: center; }
+.reno-portal { position: absolute; inset: 8%; border-radius: 50%; transform: scale(0); opacity: 0; transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.2, 1), opacity 0.5s ease; }
+.reno-portal svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.reno-portal .reno-core { position: absolute; inset: 10%; border-radius: 50%; background: conic-gradient(from 0deg, rgba(255, 91, 31, 0.0), rgba(255, 91, 31, 0.55), rgba(255, 201, 138, 0.35), rgba(255, 91, 31, 0.0), rgba(255, 91, 31, 0.45), rgba(255, 91, 31, 0)); filter: blur(10px); mask: radial-gradient(circle, transparent 18%, #000 60%, transparent 72%); -webkit-mask: radial-gradient(circle, transparent 18%, #000 60%, transparent 72%); }
+.reno-intro[data-scene="future"] .reno-portal { transform: scale(0.35); opacity: 0.7; }
+.reno-intro:is([data-scene="open"], [data-scene="travel"]) .reno-portal { transform: scale(1); opacity: 1; }
+.reno-intro[data-scene="travel"] .reno-portal { transform: scale(1.12); }
+.reno-intro[data-scene="arrive"] .reno-portal { transform: scale(0.9); opacity: 1; }
+.reno-intro[data-scene="reveal"] .reno-portal { transform: scale(0); opacity: 0; transition-duration: 0.5s; }
+.reno-warp { position: absolute; inset: -20%; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255, 201, 138, 0) 0deg 6deg, rgba(255, 201, 138, 0.22) 6deg 7deg); mask: radial-gradient(circle, transparent 12%, #000 40%, transparent 75%); -webkit-mask: radial-gradient(circle, transparent 12%, #000 40%, transparent 75%); opacity: 0; transform: scale(0.4); transition: opacity 0.3s ease, transform 1.3s cubic-bezier(0.5, 0, 0.2, 1); }
+.reno-intro[data-scene="travel"] .reno-warp { opacity: 1; transform: scale(1.6); }
+
+.reno-hero { position: absolute; width: 46%; bottom: 4%; left: 6%; transition: transform 1s cubic-bezier(0.5, 0, 0.3, 1), opacity 0.9s ease, filter 0.9s ease, left 0s; z-index: 2; }
+.reno-hero .reno-art { width: 100%; height: auto; filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.45)); }
+html[dir="rtl"] .reno-hero { left: auto; right: 6%; }
+.reno-intro:is([data-scene="out"], [data-scene="future"]) .reno-hero { opacity: 0; transform: translateY(12px); }
+.reno-hero.reno-tuning .cup-ring { stroke-width: 7px; }
+@media (prefers-reduced-motion: no-preference) { .reno-hero.reno-tuning .cup-ring { animation: reno-pulse 0.22s ease-in-out 6 alternate; } }
+.reno-intro[data-scene="open"] .reno-hero { opacity: 1; transform: none; }
+.reno-intro[data-scene="travel"] .reno-hero { opacity: 0; filter: blur(3px); transform: translate(52%, -18%) scale(0.18); }
+html[dir="rtl"] .reno-intro[data-scene="travel"] .reno-hero { transform: translate(-52%, -18%) scale(0.18); }
+.reno-intro[data-scene="arrive"] .reno-hero { left: 27%; right: auto; opacity: 1; filter: none; transform: none; transition: transform 0.7s cubic-bezier(0.2, 1.2, 0.4, 1), opacity 0.35s ease; }
+.reno-intro[data-scene="arrive"] .reno-hero.reno-emerge { transform: scale(0.2) translateY(-40%); opacity: 0; transition: none; }
+.reno-intro[data-scene="reveal"] .reno-hero { left: 27%; right: auto; opacity: 0; transform: translate(var(--reno-dock-x, 120%), var(--reno-dock-y, 120%)) scale(0.14); transition: transform 0.65s cubic-bezier(0.5, 0, 0.3, 1), opacity 0.65s ease; }
+
+.reno-caption { position: absolute; bottom: max(28px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(230, 230, 230, 0.7); width: max-content; max-width: calc(100vw - 32px); text-align: center; }
+html[dir="rtl"] .reno-caption { letter-spacing: 0; }
+.reno-skip { position: absolute; top: max(20px, env(safe-area-inset-top, 0px)); inset-inline-end: max(20px, env(safe-area-inset-right, 0px)); padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(11, 14, 23, 0.5); color: #fff; font: inherit; font-size: 13px; cursor: pointer; z-index: 3; }
+.reno-skip:hover { border-color: #ff5b1f; }
+
+/* Reduced motion: a still arrival, no travel. */
+.reno-intro[data-reduced="true"] *, .reno-intro[data-reduced="true"] { transition-duration: 0.01ms !important; animation: none !important; }
+.reno-intro[data-reduced="true"] .reno-portal { transform: scale(0.9); opacity: 1; }
+.reno-intro[data-reduced="true"] .reno-hero { left: 27%; right: auto; opacity: 1; transform: none; filter: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reno-ring-a { transform-origin: 50% 50%; animation: reno-spin 14s linear infinite; }
+  .reno-ring-b { transform-origin: 50% 50%; animation: reno-spin 9s linear infinite reverse; }
+  .reno-portal .reno-core { animation: reno-spin 6s linear infinite; }
+  .reno-particle { animation: reno-drift 3.5s ease-in-out infinite; }
+}
+@keyframes reno-spin { to { transform: rotate(360deg); } }
+@keyframes reno-drift { 0% { transform: translate(0, 0); opacity: 0; } 30% { opacity: 0.9; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+.reno-particle { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: #ffc98a; box-shadow: 0 0 8px #ff5b1f; opacity: 0; }

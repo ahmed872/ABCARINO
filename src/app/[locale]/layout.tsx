@@ -8,6 +8,7 @@ import { FloatingWhatsApp } from "@/components/site/FloatingWhatsApp";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { RevealObserver } from "@/components/site/RevealObserver";
+import { RenoMount } from "@/components/reno/RenoMount";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getMedia, getSettings } from "@/lib/content/public";
 import { dirOf, getDictionary, htmlLang, isLocale, locales, tr } from "@/lib/i18n";
@@ -98,6 +99,7 @@ export default async function LocaleLayout({
             <main id="main">{children}</main>
             <Footer locale={locale} t={t} settings={settings} />
             {wa ? <FloatingWhatsApp href={wa} label={tr(locale, settings.cta.primaryLabelEn, settings.cta.primaryLabelAr)} /> : null}
+            <RenoMount locale={locale} t={t.reno} whatsapp={wa} stackAboveWhatsApp={!!wa} />
             <RevealObserver />
           </>
         )}
