@@ -125,12 +125,18 @@ export function Footer({ locale, t, settings }: { locale: Locale; t: Dictionary;
           </div>
         </div>
 
-        <div
-          aria-hidden
-          dir="ltr"
-          className="pointer-events-none mt-20 select-none text-center text-[17vw] font-semibold leading-[0.8] tracking-[-0.04em] text-paper/[0.035] lg:text-[15.5rem]"
-        >
-          ABCARINO
+        {/* Sized from the container (the word is ~4.9em wide, ~5.1em in the fallback font),
+            so the whole wordmark fits at every viewport width and zoom level. The tracking is
+            inline, like the header lockup: the Arabic locale zeroes `tracking-[…]` classes,
+            which would make this Latin word wider there than in English. */}
+        <div aria-hidden className="pointer-events-none @container mt-20 select-none">
+          <div
+            dir="ltr"
+            className="whitespace-nowrap text-center text-[19.6cqw] font-semibold leading-[0.8] text-paper/[0.035]"
+            style={{ letterSpacing: "-0.04em" }}
+          >
+            ABCARINO
+          </div>
         </div>
 
         <div className="mt-6 flex flex-col gap-4 border-t border-paper/10 pt-8 text-xs text-paper/45 md:flex-row md:items-center md:justify-between">
