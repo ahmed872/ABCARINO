@@ -11,8 +11,8 @@ export const RENO_CONFIG = {
     /** Automated browsers (WebDriver) skip the intro; ?reno-intro=1 forces it, ?reno-intro=auto applies the normal rules. */
     skipForAutomation: true,
     forceParam: "reno-intro",
-    /** Scene timings in ms (total ≈ 5.6 s). */
-    timeline: { open: 1200, travel: 2500, arrive: 3800, reveal: 5000, done: 5700 },
+    /** Scene start times in ms (total ≈ 6.4 s): portal ignites → jump → time tunnel → arrival → reveal. */
+    timeline: { ignite: 1100, jump: 2150, tunnel: 2650, arrive: 4050, reveal: 5650, done: 6400 },
     reducedMotionHoldMs: 1600,
   },
   companion: {

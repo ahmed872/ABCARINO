@@ -44,7 +44,7 @@ export default function RenoExperience({ locale, t, whatsapp, stackAboveWhatsApp
       {phase === "intro" ? (
         <RenoIntro
           locale={locale}
-          t={t.intro}
+          t={t}
           reduced={reduced}
           stackAboveWhatsApp={stackAboveWhatsApp}
           onDone={(how) => {

@@ -306,8 +306,6 @@ const en = {
       label: "RENO arrives from the future",
       skip: "Skip intro",
       year: "Year",
-      from: "From",
-      to: "To",
       departing: "Opening the portal",
       warping: "Time travel in progress",
       arrived: "Arrived in 2026",

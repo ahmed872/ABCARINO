@@ -26,6 +26,11 @@ test.describe("RENO arrival intro", () => {
     // The page underneath is fully rendered: the intro never replaces content.
     expect(await page.locator("main h1").count()).toBe(1);
     await expect(intro.locator(".reno-year")).toHaveText("2026", { timeout: 6_000 });
+    // He lands and the name card introduces him with the site's own wording.
+    await expect(intro).toHaveAttribute("data-scene", "arrive");
+    await expect(intro.locator(".reno-title")).toBeVisible();
+    await expect(intro.locator(".reno-title")).toContainText("ABCARINO");
+    await expect(intro.locator(".reno-title")).toContainText("Visiting from 2186");
     await expect(intro).toBeHidden({ timeout: 6_000 });
     await expect(launcher(page)).toBeVisible();
     expect(await page.evaluate(() => sessionStorage.getItem("reno:intro"))).toBe("seen");
@@ -52,6 +57,28 @@ test.describe("RENO arrival intro", () => {
     await expect(p2.locator(".reno-intro")).toBeVisible();
     await p2.keyboard.press("Escape");
     await expect(p2.locator(".reno-intro")).toHaveCount(0, { timeout: 2_000 });
+    await ctx.close();
+  });
+
+  test("the intro never causes sideways scroll or covers the skip button, on a phone in both languages", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    for (const [path, skipName] of [["/en?reno-intro=1", "Skip intro"], ["/ar?reno-intro=1", "تخطّي المقدمة"]] as const) {
+      await page.goto(path);
+      const intro = page.locator(".reno-intro");
+      await expect(intro).toHaveAttribute("data-scene", "arrive", { timeout: 8_000 });
+      const title = (await intro.locator(".reno-title").boundingBox())!;
+      expect(title.x, path).toBeGreaterThanOrEqual(0);
+      expect(title.x + title.width, path).toBeLessThanOrEqual(360);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), path).toBeLessThanOrEqual(1);
+      const skip = page.getByRole("button", { name: skipName });
+      const box = (await skip.boundingBox())!;
+      const onTop = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest(".reno-skip") !== null, [box.x + box.width / 2, box.y + box.height / 2]);
+      expect(onTop, path).toBe(true);
+      await skip.tap();
+      await expect(intro).toHaveCount(0, { timeout: 2_000 });
+      await expect(launcher(page)).toBeVisible();
+    }
     await ctx.close();
   });
 
@@ -198,6 +225,25 @@ test.describe("RENO companion & FAQ", () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
     }
     await ctx.close();
+  });
+
+  test("his eyes follow the mouse, and stay still under reduced motion", async ({ browser, page }) => {
+    const look = (p: Page) => p.locator(".reno-root").evaluate((el) => (el as HTMLElement).style.getPropertyValue("--reno-look-x"));
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, reducedMotion: "no-preference" });
+    const moving = await ctx.newPage();
+    await moving.goto("/en/about");
+    await expect(launcher(moving)).toBeVisible();
+    await moving.mouse.move(200, 300);
+    await moving.mouse.move(210, 310);
+    await expect.poll(async () => Number(await look(moving))).toBeLessThan(-3); // looking left, towards the pointer
+    await ctx.close();
+
+    await page.goto("/en/about");
+    await expect(launcher(page)).toBeVisible();
+    await page.mouse.move(200, 300);
+    await page.mouse.move(210, 310);
+    await page.waitForTimeout(300);
+    expect(await look(page)).toBe("");
   });
 
   test("survives corrupted or tampered session data", async ({ page }) => {

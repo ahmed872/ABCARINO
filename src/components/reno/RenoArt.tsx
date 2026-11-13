@@ -9,11 +9,14 @@ export type RenoMood = "chill" | "hello" | "really" | "whoa" | "sip" | "solving"
 export function RenoArt({
   mood = "chill",
   variant = "full",
+  talking = false,
   label,
   className,
 }: {
   mood?: RenoMood;
   variant?: "full" | "avatar";
+  /** Moves the mouth, for the moment an answer appears. */
+  talking?: boolean;
   /** Accessible name; omit for decorative use. */
   label?: string;
   className?: string;
@@ -28,6 +31,7 @@ export function RenoArt({
       className={`reno-art${className ? ` ${className}` : ""}`}
       data-mood={mood}
       data-variant={variant}
+      data-talk={talking ? "true" : undefined}
       role={label ? "img" : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}

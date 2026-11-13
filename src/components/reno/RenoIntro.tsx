@@ -6,21 +6,20 @@ import { RENO_CONFIG } from "@/lib/reno/config";
 import type { Dictionary } from "@/lib/i18n";
 import { RenoArt, type RenoMood } from "./RenoArt";
 
-type Scene = "future" | "open" | "travel" | "arrive" | "reveal" | "out";
+/**
+ * out → future (RENO in 2186) → ignite (the portal draws itself) → jump (into it) →
+ * tunnel (time travel) → arrive (lands in 2026, name card) → reveal (iris to his corner).
+ */
+type Scene = "out" | "future" | "ignite" | "jump" | "tunnel" | "arrive" | "reveal";
 
 const FROM_YEAR = 2186;
 const TO_YEAR = 2026;
-
-const PARTICLES = Array.from({ length: 14 }, (_, i) => {
-  const a = (i / 14) * Math.PI * 2;
-  const r = 140 + (i % 3) * 40;
-  return { dx: `${Math.round(Math.cos(a) * r)}px`, dy: `${Math.round(Math.sin(a) * r)}px`, delay: `${(i % 7) * 0.4}s` };
-});
+const BRAND = { en: "ABCARINO", ar: "عبقرينو" } as const;
+const TUNNEL_RINGS = [0, 1, 2, 3, 4, 5, 6];
 
 /**
- * RENO's arrival from 2186: the future → the portal opens → time travel → arrival in
- * 2026 → the page is revealed and RENO settles into his corner. Mounted only after the
- * page has rendered, so it never delays content or LCP. Skippable (button or Esc).
+ * RENO's arrival from 2186. Mounted only after the page has rendered, so it never delays
+ * content or LCP; everything moves with transforms and opacity. Skippable (button or Esc).
  */
 export function RenoIntro({
   locale,
@@ -31,15 +30,15 @@ export function RenoIntro({
 }: {
   locale: RenoLocale;
   stackAboveWhatsApp: boolean;
-  t: Dictionary["reno"]["intro"];
+  t: Dictionary["reno"];
   reduced: boolean;
   onDone: (how: "seen" | "skipped") => void;
 }) {
   const [scene, setScene] = useState<Scene>("out");
   const [year, setYear] = useState(reduced ? TO_YEAR : FROM_YEAR);
-  const [mood, setMood] = useState<RenoMood>(reduced ? "hello" : "chill");
-  const [emerging, setEmerging] = useState(false);
+  const [mood, setMood] = useState<RenoMood>(reduced ? "hello" : "sip");
   const [tuning, setTuning] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const skipRef = useRef<HTMLButtonElement>(null);
   const finished = useRef(false);
@@ -68,13 +67,22 @@ export function RenoIntro({
     if (reduced) {
       at(RENO_CONFIG.intro.reducedMotionHoldMs, () => finish("seen"));
     } else {
-      at(tl.open, () => setScene("open"));
-      at(tl.open + 350, () => setTuning(true)); // adjusts his headphones: the rings flare
-      at(tl.open + 1000, () => setTuning(false));
-      at(tl.travel, () => {
-        setScene("travel");
+      at(650, () => setMood("chill"));
+      at(tl.ignite, () => {
+        setScene("ignite");
+        setMood("really");
+      });
+      at(tl.ignite + 120, () => setTuning(true)); // a tap on the headphones: the rings flare
+      at(tl.ignite + 800, () => setTuning(false));
+      at(tl.jump, () => {
+        setScene("jump");
+        setMood("chill");
+      });
+      at(tl.tunnel, () => {
+        setScene("tunnel");
+        setMood("sip"); // unbothered, tea in hand, 160 years in a second
         const start = performance.now();
-        const span = tl.arrive - tl.travel;
+        const span = tl.arrive - tl.tunnel;
         const step = (now: number) => {
           const p = Math.min(1, (now - start) / span);
           setYear(Math.round(FROM_YEAR - (FROM_YEAR - TO_YEAR) * (1 - Math.pow(1 - p, 2))));
@@ -83,20 +91,23 @@ export function RenoIntro({
         raf = requestAnimationFrame(step);
       });
       at(tl.arrive, () => {
-        setEmerging(true);
+        cancelAnimationFrame(raf);
+        setYear(TO_YEAR);
         setScene("arrive");
-        requestAnimationFrame(() => requestAnimationFrame(() => setEmerging(false)));
+        setMood("chill");
       });
-      at(tl.arrive + 450, () => setMood("hello"));
+      at(tl.arrive + 380, () => setMood("hello"));
       at(tl.reveal, () => {
-        // Fly to the companion's corner.
+        // The overlay closes like an iris onto the companion's corner, and RENO goes with it.
+        const stacked = stackAboveWhatsApp && locale !== "ar" && window.innerWidth < 1024;
+        const targetX = window.innerWidth - 20 - 32;
+        const targetY = window.innerHeight - 20 - 32 - (stacked ? 68 : 0);
+        rootRef.current?.style.setProperty("--reno-iris-x", `${targetX}px`);
+        rootRef.current?.style.setProperty("--reno-iris-y", `${targetY}px`);
         const hero = heroRef.current;
         if (hero) {
           const r = hero.getBoundingClientRect();
-          const stacked = stackAboveWhatsApp && locale !== "ar" && window.innerWidth < 1024;
-          const targetX = window.innerWidth - 20 - 32;
-          const targetY = window.innerHeight - 20 - 32 - (stacked ? 68 : 0);
-          hero.style.transform = `translate(${targetX - (r.left + r.width / 2)}px, ${targetY - (r.top + r.height / 2)}px) scale(0.14)`;
+          hero.style.transform = `translate(${targetX - (r.left + r.width / 2)}px, ${targetY - (r.top + r.height / 2)}px) scale(0.12)`;
         }
         setScene("reveal");
       });
@@ -118,65 +129,88 @@ export function RenoIntro({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per mount
   }, []);
 
-  const caption = scene === "future" || scene === "open" ? t.departing : scene === "travel" ? t.warping : t.arrived;
+  const ti = t.intro;
+  const caption = scene === "tunnel" || scene === "jump" ? ti.warping : scene === "arrive" || scene === "reveal" ? ti.arrived : ti.departing;
 
   return (
     <div
+      ref={rootRef}
       className="reno-intro"
       data-scene={scene}
       data-reduced={reduced ? "true" : "false"}
       role="dialog"
       aria-modal="true"
-      aria-label={t.label}
+      aria-label={ti.label}
       lang={locale}
       dir={locale === "ar" ? "rtl" : "ltr"}
     >
-      <div className="reno-stars" aria-hidden="true" />
+      <div className="reno-sky" aria-hidden="true" />
+      <div className="reno-grid" aria-hidden="true">
+        <i />
+      </div>
+      <div className="reno-horizon" aria-hidden="true" />
+
       <div className="reno-hud" aria-hidden="true">
-        <span>{t.year}</span>
+        <span className="reno-hud-label">{ti.year}</span>
         <span className="reno-year">{year}</span>
-        <span className="reno-route">
-          <span>
-            {t.from} {FROM_YEAR}
-          </span>
-          <span className="reno-bar">
-            <i />
-          </span>
-          <span>
-            {t.to} {TO_YEAR}
-          </span>
-        </span>
       </div>
 
       <div className="reno-stage" aria-hidden="true">
-        <div className="reno-warp" />
+        <div className="reno-tunnel">
+          {TUNNEL_RINGS.map((i) => (
+            <i key={i} style={{ animationDelay: `${(-i * 0.16).toFixed(2)}s` }} />
+          ))}
+          <b />
+        </div>
         <div className="reno-portal">
           <div className="reno-core" />
           <svg viewBox="0 0 200 200">
             <defs>
               <filter id="reno-portal-glow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="3" />
+                <feGaussianBlur stdDeviation="3.5" />
               </filter>
             </defs>
-            <circle cx="100" cy="100" r="92" fill="none" stroke="#FF5B1F" strokeWidth="6" filter="url(#reno-portal-glow)" opacity="0.8" />
-            <circle cx="100" cy="100" r="92" fill="none" stroke="#FF7A2E" strokeWidth="2.5" />
-            <circle className="reno-ring-a" cx="100" cy="100" r="82" fill="none" stroke="#FFC98A" strokeOpacity="0.55" strokeWidth="1.2" strokeDasharray="1 7" />
-            <circle className="reno-ring-b" cx="100" cy="100" r="72" fill="none" stroke="#FF5B1F" strokeOpacity="0.6" strokeWidth="1.5" strokeDasharray="18 10 4 10" />
+            <circle className="reno-ring-draw" cx="100" cy="100" r="92" fill="none" stroke="#FF5B1F" strokeWidth="7" filter="url(#reno-portal-glow)" opacity="0.85" pathLength="100" />
+            <circle className="reno-ring-draw" cx="100" cy="100" r="92" fill="none" stroke="#FF8A45" strokeWidth="2.5" pathLength="100" />
+            <circle className="reno-ring-a" cx="100" cy="100" r="82" fill="none" stroke="#FFC98A" strokeOpacity="0.6" strokeWidth="1.2" strokeDasharray="1 7" />
+            <circle className="reno-ring-b" cx="100" cy="100" r="72" fill="none" stroke="#FF5B1F" strokeOpacity="0.65" strokeWidth="1.5" strokeDasharray="18 10 4 10" />
           </svg>
-          {PARTICLES.map((p, i) => (
-            <span key={i} className="reno-particle" style={{ ["--dx" as string]: p.dx, ["--dy" as string]: p.dy, animationDelay: p.delay }} />
-          ))}
         </div>
-        <div ref={heroRef} className={`reno-hero${emerging ? " reno-emerge" : ""}${tuning ? " reno-tuning" : ""}`}>
-          <RenoArt mood={mood} />
+        <div className="reno-shock" />
+        <div ref={heroRef} className={`reno-hero${tuning ? " reno-tuning" : ""}`}>
+          <div className="reno-hero-fx">
+            <RenoArt mood={mood} />
+          </div>
         </div>
       </div>
 
-      <p className="reno-caption" aria-live="polite">
-        {caption}
-      </p>
+      {/* The name card: who just arrived. */}
+      <div className="reno-title" aria-hidden="true">
+        <span className="reno-title-brand">{BRAND[locale]}</span>
+        <span className="reno-title-name">
+          {locale === "ar" ? t.name : [...t.name].map((ch, i) => <span key={i} style={{ animationDelay: `${0.45 + i * 0.07}s` }}>{ch}</span>)}
+        </span>
+        <span className="reno-title-sub">{t.subtitle}</span>
+      </div>
+
+      <div className="reno-flash" aria-hidden="true" />
+
+      <div className="reno-status">
+        <span className="reno-route" aria-hidden="true">
+          <span>{FROM_YEAR}</span>
+          <span className="reno-bar">
+            <i />
+          </span>
+          <span>{TO_YEAR}</span>
+        </span>
+        <p className="reno-caption" aria-live="polite">
+          {caption}
+        </p>
+      </div>
+
+      <div className="reno-letterbox" aria-hidden="true" />
       <button ref={skipRef} type="button" className="reno-skip" onClick={() => finish("skipped")}>
-        {t.skip}
+        {ti.skip}
       </button>
     </div>
   );

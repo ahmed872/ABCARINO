@@ -81,6 +81,7 @@ export function RenoPanel({
   const [showTopics, setShowTopics] = useState(() => messages.length <= 1);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [talking, setTalking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
@@ -144,6 +145,8 @@ export function RenoPanel({
       }
       setMessages((m) => [...m, reply]);
       setBusy(false);
+      setTalking(true);
+      later(() => setTalking(false), 1500);
     }, delay);
   }
 
@@ -163,6 +166,7 @@ export function RenoPanel({
   function restart() {
     timers.current.forEach((h) => window.clearTimeout(h));
     setBusy(false);
+    setTalking(false);
     nextId.current = 2;
     setMessages(GREETING);
     setShowTopics(true);
@@ -214,7 +218,7 @@ export function RenoPanel({
     <section id={id} ref={panelRef} tabIndex={-1} className="reno-panel" role="dialog" aria-modal="false" aria-label={t.panelLabel}>
       <header>
         <div className="reno-head-avatar" aria-hidden="true">
-          <RenoArt variant="avatar" mood={busy ? "sip" : "chill"} />
+          <RenoArt variant="avatar" mood={busy ? "sip" : "chill"} talking={talking} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2>{t.name}</h2>
