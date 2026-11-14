@@ -9,7 +9,8 @@ answering from a local knowledge base. No AI, no external services, no API costs
 |---|---|
 | `src/content/reno/faq.ts` | Knowledge base (categories, questions, keywords, answers, links). Edit this to change what RENO knows. |
 | `src/lib/reno/normalize.ts` | Arabic/English normalisation, synonyms and filler words. |
-| `src/lib/reno/matcher.ts` | Deterministic matcher: exact phrase → wording overlap → keywords. Answers, suggests or says it doesn't know. |
+| `src/lib/reno/matcher.ts` | Deterministic matcher: exact phrase → wording overlap → keywords, forgiving one typo per word. Answers, suggests or says it doesn't know. |
+| `src/lib/reno/knowledge.ts`, `src/app/api/reno/[locale]` | Live knowledge built from the CMS and page copy (see below). |
 | `src/lib/reno/config.ts` | Intro frequency/pages/timings, idle bubble, reply delay. |
 | `src/lib/i18n/dictionaries/{en,ar}.ts` → `reno` | Interface copy and RENO's short quips. |
 | `src/components/reno/art.ts` | Character artwork (one layered SVG, ~5 KB gzipped). |
@@ -28,6 +29,23 @@ answering from a local knowledge base. No AI, no external services, no API costs
 3. `npm test` checks ids, cross-references, bilingual content, banned claims, and that every
    phrasing matches its own entry.
 
+## Live knowledge (from the CMS)
+
+Besides the hand-written FAQ, RENO reads what the site itself publishes, so new content in the
+admin reaches him without code changes:
+
+- `src/lib/reno/knowledge.ts` builds entries from the catalogue (every solution, package and
+  category, what is available and what is coming), the contact settings (email, phone, hours,
+  address, social accounts) and the page copy in the dictionaries (how we work, why us, values,
+  the name). Where the site publishes nothing (hours, address, projects, brands, warranty
+  terms) the answer says so and points to the team.
+- Solutions the hand-written FAQ already covers get **live facts** (status, what's included)
+  appended under the hand-written answer instead of a second entry; so do the contact answers.
+- `GET /api/reno/[locale]` serves it as JSON (public content only); the panel fetches it once
+  and still works from the built-in FAQ if the request fails.
+- `SOLUTION_WORDINGS` in `knowledge.ts` and `CANONICAL` in `normalize.ts` hold everyday
+  wordings and synonyms (matching aids only; they never change an answer).
+
 ## Expressions
 
 `chill` (default), `hello`, `really`, `whoa`, `sip`, `solving`, via `<RenoArt mood="…" />`.
@@ -35,15 +53,16 @@ The artwork's layers are classes (`r-eyes`, `r-hand`, …); see the comment in `
 
 ## Intro rules
 
-Once per browser session, only when landing on the home page, skippable (button or Esc),
-a still 1.6 s arrival under reduced motion, never for automated browsers.
+Once per browser session, only when landing on the home page, a still 1.6 s arrival under
+reduced motion, never for automated browsers. There is no skip button on screen: Esc ends it,
+and a skip button appears for keyboard users on Tab.
 `?reno-intro=1` forces it; `?reno-intro=auto` applies the normal rules in automated browsers (tests).
 
 Scenes (`data-scene` on `.reno-intro`, timings in `RENO_CONFIG.intro.timeline`):
-`future` (RENO in 2186 on the grid) → `ignite` (the portal draws itself) → `jump` →
-`tunnel` (time travel, the year counts down) → `arrive` (he lands in 2026, name card) →
-`reveal` (the overlay closes like an iris onto his corner). Everything animates with
-transforms, opacity and clip-path only.
+`wait` (a point of light while the page finishes loading) → `count` (the ring opens, the
+year runs back from 2186) → `arrive` (RENO appears in 2026, name card) → `reveal` (the page
+returns, he glides to his corner). It is deliberately quiet and light: only transforms and
+opacity move, each on its own layer, and the drawing holds still while it is moving.
 
 ## Companion motion
 

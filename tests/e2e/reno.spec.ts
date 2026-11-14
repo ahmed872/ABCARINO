@@ -21,7 +21,9 @@ test.describe("RENO arrival intro", () => {
     await page.goto("/en?reno-intro=auto");
     const intro = page.getByRole("dialog", { name: "RENO arrives from the future" });
     await expect(intro).toBeVisible();
-    await expect(page.getByRole("button", { name: "Skip intro" })).toBeFocused();
+    await expect(intro).toBeFocused();
+    // No skip button on screen: it exists for keyboard users only.
+    expect(await page.getByRole("button", { name: "Skip intro" }).evaluate((el) => getComputedStyle(el).opacity)).toBe("0");
     await expect(intro.locator(".reno-year")).toHaveText("2186");
     // The page underneath is fully rendered: the intro never replaces content.
     expect(await page.locator("main h1").count()).toBe(1);
@@ -43,41 +45,46 @@ test.describe("RENO arrival intro", () => {
     expect(errors).toEqual([]);
   });
 
-  test("Skip and Esc end it immediately and are remembered", async ({ page, browser }) => {
+  test("Esc ends it at once and is remembered; keyboard users can reach a skip button", async ({ page, browser }) => {
     await page.goto("/ar?reno-intro=auto");
-    const skip = page.getByRole("button", { name: "تخطّي المقدمة" });
-    await expect(skip).toBeVisible();
-    await skip.click();
+    await expect(page.locator(".reno-intro")).toBeVisible();
+    await page.keyboard.press("Escape");
     await expect(page.locator(".reno-intro")).toHaveCount(0, { timeout: 2_000 });
     expect(await page.evaluate(() => sessionStorage.getItem("reno:intro"))).toBe("skipped");
+    await expect(launcher(page)).toBeVisible();
 
     const ctx = await browser.newContext();
     const p2 = await ctx.newPage();
     await p2.goto("/en?reno-intro=auto");
     await expect(p2.locator(".reno-intro")).toBeVisible();
-    await p2.keyboard.press("Escape");
+    await p2.keyboard.press("Tab");
+    const skip = p2.getByRole("button", { name: "Skip intro" });
+    await expect(skip).toBeFocused();
+    expect(await skip.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    await p2.keyboard.press("Enter");
     await expect(p2.locator(".reno-intro")).toHaveCount(0, { timeout: 2_000 });
     await ctx.close();
   });
 
-  test("the intro never causes sideways scroll or covers the skip button, on a phone in both languages", async ({ browser }) => {
+  test("on a phone, in both languages: fits the screen, shows no skip button, ends on its own", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
-    for (const [path, skipName] of [["/en?reno-intro=1", "Skip intro"], ["/ar?reno-intro=1", "تخطّي المقدمة"]] as const) {
+    for (const path of ["/en?reno-intro=1", "/ar?reno-intro=1"]) {
       await page.goto(path);
       const intro = page.locator(".reno-intro");
       await expect(intro).toHaveAttribute("data-scene", "arrive", { timeout: 8_000 });
-      const title = (await intro.locator(".reno-title").boundingBox())!;
-      expect(title.x, path).toBeGreaterThanOrEqual(0);
-      expect(title.x + title.width, path).toBeLessThanOrEqual(360);
+      for (const part of [".reno-title", ".reno-stage", ".reno-year"]) {
+        const box = (await intro.locator(part).boundingBox())!;
+        expect(box.x, `${path} ${part}`).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, `${path} ${part}`).toBeLessThanOrEqual(360);
+        expect(box.y, `${path} ${part}`).toBeGreaterThanOrEqual(0);
+        expect(box.y + box.height, `${path} ${part}`).toBeLessThanOrEqual(640);
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), path).toBeLessThanOrEqual(1);
-      const skip = page.getByRole("button", { name: skipName });
-      const box = (await skip.boundingBox())!;
-      const onTop = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest(".reno-skip") !== null, [box.x + box.width / 2, box.y + box.height / 2]);
-      expect(onTop, path).toBe(true);
-      await skip.tap();
-      await expect(intro).toHaveCount(0, { timeout: 2_000 });
+      expect(await intro.locator(".reno-skip").evaluate((el) => getComputedStyle(el).opacity), path).toBe("0");
+      await expect(intro).toHaveCount(0, { timeout: 6_000 });
       await expect(launcher(page)).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.style.overflow), path).toBe("");
     }
     await ctx.close();
   });
@@ -244,6 +251,79 @@ test.describe("RENO companion & FAQ", () => {
     await page.mouse.move(210, 310);
     await page.waitForTimeout(300);
     expect(await look(page)).toBe("");
+  });
+
+  test("answers from the site's live catalogue and settings, and adds live details to built-in answers", async ({ page, request }) => {
+    const admin = await userWithSession("super_admin");
+    await callAction("saveSettings", ["contact", { ok: false }, form({ whatsappNumber: "+20 100 000 0000", email: "hello@abcarino.test", businessHoursEn: "Sat to Thu, 10 to 6" })], { cookie: admin.cookie, path: "/admin/settings" });
+
+    // The endpoint: public JSON for a known locale only.
+    const api = await request.get("/api/reno/en");
+    expect(api.status()).toBe(200);
+    expect(api.headers()["content-type"]).toContain("application/json");
+    const body = (await api.json()) as { entries: Array<{ id: string }>; facts: Record<string, string> };
+    expect(body.entries.some((e) => e.id === "list:available")).toBe(true);
+    expect(body.facts["#contact"]).toContain("hello@abcarino.test");
+    expect((await request.get("/api/reno/fr")).status()).toBe(404);
+
+    const errors = errorsOf(page);
+    await page.goto("/en/about");
+    await launcher(page).click();
+    const panel = page.locator(".reno-panel");
+    const ask = async (q: string) => {
+      await panel.getByRole("textbox").fill(q);
+      await panel.getByRole("textbox").press("Enter");
+    };
+    // A list built from the catalogue.
+    await ask("which solutions are available now");
+    await expect(panel.locator('[data-faq="list:available"]')).toContainText("Smart Lighting");
+    // A built-in answer gains the solution's live status and features.
+    await ask("home cinema");
+    await expect(panel.locator('[data-faq="home-cinema"] .reno-facts')).toContainText("Status:");
+    // Contact details exactly as saved in the settings.
+    await ask("what is your email");
+    await expect(panel.locator('[data-faq="contact:email"]')).toContainText("hello@abcarino.test");
+    await ask("when are you open");
+    await expect(panel.locator('[data-faq="contact:hours"]')).toContainText("Sat to Thu, 10 to 6");
+    // The site's own page copy.
+    await ask("what are the steps of a project");
+    await expect(panel.locator('[data-faq="site:process"]')).toContainText("Hand over");
+    // Unpublished topics are answered honestly.
+    await ask("is there a warranty");
+    await expect(panel.locator('[data-faq="site:warranty"]')).toContainText("aren't published");
+    // The live topic tabs appear.
+    await panel.getByRole("button", { name: "Pick a topic" }).last().click();
+    await expect(panel.getByRole("button", { name: "Packages", exact: true })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test("if the live knowledge can't be loaded, the built-in answers still work", async ({ page }) => {
+    await page.route("**/api/reno/**", (route) => route.abort("failed"));
+    await page.goto("/en/about");
+    await launcher(page).click();
+    const panel = page.locator(".reno-panel");
+    await panel.getByRole("textbox").fill("home cinema");
+    await panel.getByRole("textbox").press("Enter");
+    await expect(panel.locator('[data-faq="home-cinema"]')).toBeVisible();
+    await expect(panel.locator(".reno-facts")).toHaveCount(0);
+    await panel.getByRole("textbox").fill("is there a warranty");
+    await panel.getByRole("textbox").press("Enter");
+    await expect(panel.locator('[data-kind="unknown"], [data-kind="suggest"]').last()).toBeVisible();
+  });
+
+  test("Arabic headings keep enough line spacing on desktop", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto("/ar");
+    const ratios = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>(".display-1, .display-2, .display-3")].map((el) => {
+        const cs = getComputedStyle(el);
+        return parseFloat(cs.lineHeight) / parseFloat(cs.fontSize);
+      }),
+    );
+    expect(ratios.length).toBeGreaterThan(3);
+    for (const r of ratios) expect(r).toBeGreaterThanOrEqual(1.28);
+    await ctx.close();
   });
 
   test("survives corrupted or tampered session data", async ({ page }) => {

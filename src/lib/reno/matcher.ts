@@ -4,7 +4,7 @@
  * suggests close matches, or admits it doesn't know. It never composes new answers.
  */
 import type { RenoFaq } from "@/content/reno/faq";
-import { normalizeText, tokenize } from "./normalize";
+import { nearlySame, normalizeText, tokenize } from "./normalize";
 
 export type MatchResult =
   | { kind: "answer"; entry: RenoFaq; score: number; suggestions: RenoFaq[] }
@@ -31,9 +31,12 @@ function prepare(faq: RenoFaq[]): Prepared[] {
   return prepared;
 }
 
+/** How many distinct tokens of `a` appear in `b`, forgiving a single typo in longer words. */
 function overlap(a: string[], b: string[]): number {
   const set = new Set(b);
-  return new Set(a.filter((t) => set.has(t))).size;
+  let n = 0;
+  for (const t of new Set(a)) if (set.has(t) || b.some((x) => nearlySame(t, x))) n++;
+  return n;
 }
 
 function containsPhrase(haystack: string, needle: string): boolean {
@@ -43,19 +46,26 @@ function containsPhrase(haystack: string, needle: string): boolean {
 
 /** Score in [0, 1] for one entry; only an exact phrasing reaches 1. */
 export function scoreEntry(query: string, p: Prepared): number {
+  return scoreParts(query, p).score;
+}
+
+/** The score, plus how much of it came from the wording itself (used to break ties). */
+function scoreParts(query: string, p: Prepared): { score: number; wording: number } {
   const qText = normalizeText(query);
   const qTokens = tokenize(query);
-  if (!qText) return 0;
+  if (!qText) return { score: 0, wording: 0 };
 
   let best = 0;
   for (const phrase of p.phrases) {
-    if (phrase.text === qText) return 1;
+    if (phrase.text === qText) return { score: 1, wording: 1 };
     const shared = overlap(qTokens, phrase.tokens);
     if (shared > 0) {
       const uq = new Set(qTokens).size;
       const up = new Set(phrase.tokens).size;
-      // Dice coefficient on meaningful tokens.
-      best = Math.max(best, Math.min(0.95, (2 * shared) / (uq + up)));
+      // Dice coefficient on meaningful tokens. One shared word between a longer question and a
+      // one-word phrasing is a hint, not an answer ("do you work in Alexandria?" vs "how do you work?").
+      const dice = (2 * shared) / (uq + up);
+      best = Math.max(best, Math.min(up === 1 && uq > 1 ? 0.5 : 0.95, dice));
     }
     // A short query fully contained in a known phrasing ("سمارت هوم", "home cinema").
     if (qText.length >= 4 && containsPhrase(phrase.text, qText)) best = Math.max(best, 0.7);
@@ -70,15 +80,16 @@ export function scoreEntry(query: string, p: Prepared): number {
       bonus += 0.18;
     }
   }
-  return Math.min(0.99, best + Math.min(bonus, 0.45));
+  return { score: Math.min(0.99, best + Math.min(bonus, 0.45)), wording: best };
 }
 
 export function matchQuestion(query: string, faq: RenoFaq[]): MatchResult {
   if (!normalizeText(query)) return { kind: "none" };
   const ranked = prepare(faq)
-    .map((p) => ({ entry: p.entry, score: scoreEntry(query, p) }))
+    .map((p) => ({ entry: p.entry, ...scoreParts(query, p) }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score);
+    // Equal scores: the entry whose wording matched best wins over one carried by keywords.
+    .sort((a, b) => b.score - a.score || b.wording - a.wording);
   const top = ranked[0];
   if (!top || top.score < SUGGEST_THRESHOLD) return { kind: "none" };
   const visible = ranked.filter((r) => !r.entry.hidden);

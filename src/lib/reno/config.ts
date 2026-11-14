@@ -11,8 +11,11 @@ export const RENO_CONFIG = {
     /** Automated browsers (WebDriver) skip the intro; ?reno-intro=1 forces it, ?reno-intro=auto applies the normal rules. */
     skipForAutomation: true,
     forceParam: "reno-intro",
-    /** Scene start times in ms (total ≈ 6.4 s): portal ignites → jump → time tunnel → arrival → reveal. */
-    timeline: { ignite: 1100, jump: 2150, tunnel: 2650, arrive: 4050, reveal: 5650, done: 6400 },
+    /**
+     * In ms. The intro waits for the page to finish loading (between minWait and maxWait), then:
+     * the year counts down until `arrive`, RENO waves at `hello`, the page returns at `reveal`.
+     */
+    timeline: { minWait: 500, maxWait: 1500, arrive: 1900, hello: 2600, reveal: 4200, done: 5100 },
     reducedMotionHoldMs: 1600,
   },
   companion: {

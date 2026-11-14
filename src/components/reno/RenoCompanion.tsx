@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { RenoLocale } from "@/content/reno/faq";
 import { RENO_CONFIG, prefersReducedMotion, readSession, writeSession } from "@/lib/reno/config";
 import type { Dictionary } from "@/lib/i18n";
+import { loadKnowledge } from "./knowledge-client";
 import { RenoArt, type RenoMood } from "./RenoArt";
 import { RenoPanel } from "./RenoPanel";
 
@@ -74,6 +75,12 @@ export function RenoCompanion({
       cancelAnimationFrame(raf);
     };
   }, []);
+
+  // Fetch the site's live knowledge once the page has settled, so the first answer is instant.
+  useEffect(() => {
+    const h = window.setTimeout(() => void loadKnowledge(locale), 3500);
+    return () => window.clearTimeout(h);
+  }, [locale]);
 
   useEffect(() => {
     if (!arriving) return;

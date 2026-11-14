@@ -19,7 +19,8 @@ export type RenoAction =
   | { type: "whatsapp" }
   | { type: "contact" };
 
-export type RenoCategoryId = "about" | "smart-home" | "building" | "av" | "networks" | "software" | "projects" | "meta";
+/** "catalog" and "packages" are filled from the CMS at runtime (see lib/reno/knowledge.ts). */
+export type RenoCategoryId = "about" | "smart-home" | "building" | "av" | "networks" | "software" | "projects" | "meta" | "catalog" | "packages";
 
 export type RenoFaq = {
   id: string;
@@ -33,7 +34,7 @@ export type RenoFaq = {
   hidden?: boolean;
 };
 
-export const RENO_CATEGORIES: Array<{ id: Exclude<RenoCategoryId, "meta">; label: Bi }> = [
+export const RENO_CATEGORIES: Array<{ id: Exclude<RenoCategoryId, "meta" | "catalog" | "packages">; label: Bi }> = [
   { id: "about", label: { en: "About ABCARINO", ar: "عن عبقرينو" } },
   { id: "smart-home", label: { en: "Smart home", ar: "المنزل الذكي" } },
   { id: "building", label: { en: "Businesses & buildings", ar: "الشركات والمباني" } },
@@ -408,8 +409,8 @@ export const RENO_FAQ: RenoFaq[] = [
     id: "phases",
     category: "projects",
     questions: {
-      ar: ["هل ممكن تنفيذ مشروع على مراحل؟", "ينفع أبدأ بحاجة صغيرة؟", "ممكن أقسّم المشروع؟"],
-      en: ["Can a project be done in phases?", "Can I start small?"],
+      ar: ["هل ممكن تنفيذ مشروع على مراحل؟", "ينفع أبدأ بحاجة صغيرة؟", "ممكن أقسّم المشروع؟", "ينفع أوضة واحدة بس؟"],
+      en: ["Can a project be done in phases?", "Can I start small?", "Is one room enough?"],
     },
     keywords: ["مرحله", "مراحل", "تقسيم", "صغير", "phases", "stages", "start small", "step"],
     answers: {
@@ -420,14 +421,175 @@ export const RENO_FAQ: RenoFaq[] = [
     action: { type: "whatsapp" },
   },
 
+  {
+    id: "duration",
+    category: "projects",
+    questions: {
+      ar: ["المشروع بياخد وقت قد إيه؟", "التنفيذ بياخد كام يوم؟", "هتخلصوا في قد إيه؟"],
+      en: ["How long does a project take?", "How many days does installation take?", "When will it be finished?"],
+    },
+    keywords: ["مده", "وقت", "duration", "long", "timeline", "finished"],
+    answers: {
+      ar: "المدة بتختلف حسب حجم المشروع. قبل أي تنفيذ بتستلم تصميم واضح للحل وعرض فيه نطاق الشغل والأجهزة والجدول الزمني، فبتعرف المدة قبل ما الشغل يبدأ.",
+      en: "It depends on the scope. Before any work begins you receive a clear solution design and proposal covering scope, equipment and timeline, so you know the duration up front.",
+    },
+    related: ["start-info", "quote"],
+    action: { type: "contact" },
+  },
+  {
+    id: "payment",
+    category: "projects",
+    questions: {
+      ar: ["طرق الدفع إيه؟", "فيه تقسيط؟", "بدفع إزاي؟", "فيه مقدم؟"],
+      en: ["How do I pay?", "Do you offer installments?", "What are the payment terms?", "Is there a deposit?"],
+    },
+    keywords: ["دفع", "تقسيط", "قسط", "مقدم", "pay", "payment", "installments", "deposit"],
+    answers: {
+      ar: "شروط الدفع مش منشورة على الموقع، وبتتحدد مع الفريق ضمن العرض الخاص بمشروعك. ابعت تفاصيل طلبك وهيوضحولك كل حاجة قبل ما تبدأ.",
+      en: "Payment terms aren't published on the site; they are set with the team as part of the proposal for your project. Send your request and they'll make everything clear before you start.",
+    },
+    related: ["quote"],
+    action: { type: "whatsapp" },
+  },
+  {
+    id: "after-handover",
+    category: "projects",
+    questions: {
+      ar: ["فيه دعم بعد التسليم؟", "في صيانة؟", "لو حصلت مشكلة بعد التركيب أعمل إيه؟"],
+      en: ["Do you offer support after handover?", "What about maintenance?", "What if something goes wrong after installation?"],
+    },
+    keywords: ["دعم", "صيانه", "عطل", "support", "maintenance", "after", "handover"],
+    answers: {
+      ar: "عند التسليم بنمشي معاك على النظام خطوة خطوة، ونظبطه على روتينك، وبنفضل متاحين بعدها. تفاصيل الصيانة لكل مشروع بتتوضح في العرض، فاسأل الفريق عن حالتك.",
+      en: "At handover we walk you through the system, tune it to your routine, and stay reachable afterwards. Maintenance details for each project are set out in its proposal, so ask the team about your case.",
+    },
+    related: ["contact"],
+    action: { type: "whatsapp" },
+  },
+  {
+    id: "jobs",
+    category: "about",
+    questions: {
+      ar: ["عندكم وظايف؟", "بتوظفوا؟", "عايز أشتغل معاكم"],
+      en: ["Are you hiring?", "Do you have job openings?", "I want to work with you"],
+    },
+    keywords: ["وظايف", "وظيفه", "توظيف", "hiring", "jobs", "job", "career", "careers"],
+    answers: {
+      ar: "مفيش وظايف منشورة على الموقع دلوقتي. لو حابب تعرّف بنفسك، ابعت رسالة من صفحة التواصل.",
+      en: "There are no vacancies published on the site right now. If you'd like to introduce yourself, send a message through the Contact page.",
+    },
+    action: { type: "contact" },
+  },
+
   // ── Small talk (not shown as chips) ──────────────────────────────────
+  {
+    id: "help",
+    category: "meta",
+    hidden: true,
+    questions: {
+      ar: ["تقدر تساعدني في إيه؟", "بتعرف تعمل إيه؟", "أسألك عن إيه؟"],
+      en: ["What can you do?", "How can you help me?", "What can I ask you?"],
+    },
+    keywords: ["تساعدني", "help"],
+    answers: {
+      ar: "أقدر أجاوبك عن عبقرينو: الحلول والباقات، طريقة الشغل، الأسعار بتتحدد إزاي، وإزاي توصل للفريق. اكتب سؤالك أو اختار موضوع من الاقتراحات.",
+      en: "I can answer questions about ABCARINO: solutions and packages, how projects run, how pricing is set, and how to reach the team. Type a question or pick a topic.",
+    },
+    related: ["services", "quote", "contact"],
+  },
+  {
+    id: "language",
+    category: "meta",
+    hidden: true,
+    questions: {
+      ar: ["بتتكلم عربي؟", "بتتكلم انجليزي؟", "ينفع أغير اللغة؟"],
+      en: ["Do you speak Arabic?", "Do you speak English?", "Can I change the language?"],
+    },
+    keywords: ["لغه", "عربي", "انجليزي", "language", "arabic", "english"],
+    answers: {
+      ar: "بجاوب بالعربي والإنجليزي. غيّر لغة الموقع من أعلى الصفحة وأنا هغيّر معاها.",
+      en: "I answer in Arabic and English. Switch the site's language from the top of the page and I switch with it.",
+    },
+  },
+  {
+    id: "privacy",
+    category: "meta",
+    hidden: true,
+    questions: {
+      ar: ["الشات ده خصوصي؟", "بتحفظوا أسئلتي؟", "بتعملوا إيه ببياناتي؟"],
+      en: ["Is this chat private?", "Do you save my questions?", "What do you do with my data?"],
+    },
+    keywords: ["خصوصيه", "بيانات", "بياناتي", "privacy", "private", "data"],
+    answers: {
+      ar: "المحادثة دي بتفضل في متصفحك خلال زيارتك الحالية بس، وأسئلتك مش بتتبعت لأي حد. ولو بعت رسالة من نموذج التواصل، بياناتك بتتستخدم للرد على طلبك فقط.",
+      en: "This chat stays in your browser for the current visit only, and your questions aren't sent to anyone. If you use the contact form, your details are used only to respond to your request.",
+    },
+  },
+  {
+    id: "how-are-you",
+    category: "meta",
+    hidden: true,
+    questions: {
+      ar: ["عامل إيه؟", "أخبارك إيه؟", "إيه الأخبار؟", "ازيك عامل ايه"],
+      en: ["How are you?", "How's it going?", "What's up?"],
+    },
+    keywords: [],
+    answers: {
+      ar: "تمام! الشاي سخن والأسئلة مرحّب بيها. أساعدك في إيه؟",
+      en: "All good! The tea is hot and questions are welcome. What can I help with?",
+    },
+    related: ["services"],
+  },
+  {
+    id: "tea",
+    category: "meta",
+    hidden: true,
+    questions: {
+      ar: ["بتشرب إيه؟", "ليه الشاي؟", "إيه اللي في إيدك؟"],
+      en: ["What are you drinking?", "Why the tea?", "What's in your hand?"],
+    },
+    keywords: ["شاي", "tea"],
+    answers: {
+      ar: "شاي. في حاجات مابتتغيرش، حتى في سنة 2186.",
+      en: "Tea. Some things never change, even in 2186.",
+    },
+  },
+  {
+    id: "future",
+    category: "meta",
+    hidden: true,
+    questions: {
+      ar: ["المستقبل عامل إزاي؟", "سنة 2186 عاملة إزاي؟", "إيه اللي في المستقبل؟"],
+      en: ["What is the future like?", "What is 2186 like?", "How is the future?"],
+    },
+    keywords: ["مستقبل", "2186", "future"],
+    answers: {
+      ar: "مريح. التقنية بقت أهدى وبطّلت تطلب انتباهك طول الوقت، وده بالظبط اللي عبقرينو بتشتغل عليه من دلوقتي.",
+      en: "Comfortable. Technology got quieter and stopped asking for your attention, which is exactly what ABCARINO is working towards today.",
+    },
+    related: ["about"],
+  },
+  {
+    id: "bye",
+    category: "meta",
+    hidden: true,
+    questions: {
+      ar: ["مع السلامة", "باي", "سلام", "أشوفك بعدين"],
+      en: ["Bye", "Goodbye", "See you", "See you later"],
+    },
+    keywords: [],
+    answers: {
+      ar: "مع السلامة! أنا هنا في الركن لو احتجتني.",
+      en: "See you! I'll be right here in the corner if you need me.",
+    },
+  },
   {
     id: "reno",
     category: "meta",
     hidden: true,
     questions: {
-      ar: ["مين رينو؟", "انت مين؟", "انت روبوت؟", "انت ذكاء اصطناعي؟"],
-      en: ["Who are you?", "Who is RENO?", "Are you a robot?", "Are you an AI?"],
+      ar: ["مين رينو؟", "انت مين؟", "اسمك إيه؟", "انت روبوت؟", "انت ذكاء اصطناعي؟"],
+      en: ["Who are you?", "Who is RENO?", "What's your name?", "Are you a robot?", "Are you an AI?"],
     },
     keywords: ["reno", "رينو", "روبوت", "robot", "ai", "ذكاء اصطناعي"],
     answers: {

@@ -124,7 +124,7 @@
   .reno-launch:active { transform: scale(0.93); transition-duration: 0.08s; }
   /* Hover or focus: he pops up to see who's there. */
   .reno-launch:is(:hover, :focus-visible) .reno-face .reno-art { transform: translateY(0); }
-  .reno-launch[data-arriving="true"]::after { animation: reno-ping 0.9s ease-out 0.25s 2; }
+  .reno-launch[data-arriving="true"]::after { animation: reno-ping 1s ease-out 0.2s 1; }
 }
 @keyframes reno-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes reno-arrive { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -192,7 +192,8 @@ html[dir="rtl"] .reno-bubble { border-radius: 14px 14px 14px 4px; }
 .reno-msg[data-from="reno"] { align-self: flex-start; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.06); border-start-start-radius: 4px; }
 .reno-msg[data-from="user"] { align-self: flex-end; background: #ff5b1f; color: #fff; border-end-end-radius: 4px; }
 .reno-quip { display: block; margin-bottom: 4px; font-size: 12.5px; color: #ffc98a; }
-.reno-msg p { margin: 0; }
+.reno-msg p { margin: 0; white-space: pre-line; }
+.reno-facts { margin-top: 10px !important; padding-top: 10px; border-top: 1px dashed rgba(255, 255, 255, 0.14); font-size: 13.5px; color: rgba(235, 235, 235, 0.86); }
 .reno-msg .reno-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .reno-action { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: rgba(255, 91, 31, 0.16); border: 1px solid rgba(255, 91, 31, 0.5); color: #fff; font-size: 13px; text-decoration: none; }
 .reno-action:hover { background: rgba(255, 91, 31, 0.28); }
@@ -224,195 +225,62 @@ html[dir="rtl"] .reno-label { letter-spacing: 0; text-transform: none; }
 .reno-foot a:hover, .reno-foot button:hover { color: #fff; }
 
 /* ── Intro ────────────────────────────────────────────────────────────── */
-.reno-intro {
-  --reno-iris-x: 100%;
-  --reno-iris-y: 100%;
-  --reno-lb: clamp(26px, 7vh, 62px);
-  --reno-stage: min(720px, 96vw, 80vh);
-  --reno-hero-w: 58%;
-  --reno-shift-x: 0px;
-  --reno-shift-y: -5vh;
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  background: radial-gradient(90% 75% at 50% 42%, #171b2b 0%, #0a0c14 72%);
-  opacity: 0;
-  clip-path: circle(150% at var(--reno-iris-x) var(--reno-iris-y));
-  transition: opacity 0.4s ease, clip-path 0.72s cubic-bezier(0.7, 0, 0.3, 1);
-}
-@media (min-aspect-ratio: 5/4) {
-  .reno-intro { --reno-shift-x: min(260px, 21vw); --reno-shift-y: 0px; --reno-hero-w: 52%; }
-}
-.reno-intro:not([data-scene="out"]) { opacity: 1; }
-.reno-intro[data-scene="reveal"] { clip-path: circle(0px at var(--reno-iris-x) var(--reno-iris-y)); }
-/* 2026 is warmer than deep space. */
-.reno-intro::before { content: ""; position: absolute; inset: 0; background: radial-gradient(85% 75% at 50% 50%, #2a1a10 0%, #0e0f11 72%); opacity: 0; transition: opacity 0.5s ease; }
-.reno-intro:is([data-scene="arrive"], [data-scene="reveal"])::before { opacity: 1; }
+/* Quiet and centred: a point of light opens into a ring, the year runs back, RENO appears.
+   Only transforms and opacity move, each on its own layer, so it stays smooth on phones. */
+.reno-intro { --reno-stage: min(480px, 72vw, 50vh); position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; overflow: hidden; color: #fff; outline: none; }
+.reno-intro[data-scene="reveal"] { pointer-events: none; }
+.reno-bg { position: absolute; inset: 0; background: radial-gradient(75% 62% at 50% 47%, #201811 0%, #121212 46%, #0e0f11 78%); opacity: 0; transition: opacity 0.5s ease; }
+.reno-intro:not([data-scene="out"], [data-scene="reveal"]) .reno-bg { opacity: 1; }
+.reno-intro[data-scene="reveal"] .reno-bg { transition-duration: 0.85s; }
 
-.reno-sky, .reno-sky::after { position: absolute; inset: -50%; background-image: radial-gradient(1px 1px at 20px 30px, #fff, transparent), radial-gradient(1px 1px at 120px 80px, rgba(255, 255, 255, 0.8), transparent), radial-gradient(1.5px 1.5px at 200px 160px, #ffc98a, transparent), radial-gradient(1px 1px at 60px 200px, rgba(255, 255, 255, 0.7), transparent), radial-gradient(1px 1px at 260px 40px, rgba(255, 255, 255, 0.6), transparent); background-size: 300px 240px; opacity: 0.6; transition: opacity 0.5s ease, transform 1.4s cubic-bezier(0.5, 0, 0.8, 0.5); }
-.reno-sky::after { content: ""; inset: 0; background-size: 190px 170px; opacity: 0.45; }
-.reno-intro[data-scene="tunnel"] .reno-sky { transform: scale(2.4); opacity: 0.25; }
-.reno-intro:is([data-scene="arrive"], [data-scene="reveal"]) .reno-sky { opacity: 0; }
+.reno-col { position: relative; display: grid; justify-items: center; gap: clamp(10px, 2.6vh, 26px); padding: 16px; }
 
-/* The floor of 2186: a perspective grid running to an orange horizon. */
-.reno-grid { position: absolute; left: -40%; right: -40%; bottom: 0; height: 47%; perspective: 300px; perspective-origin: 50% 0; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 62%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 62%, transparent 100%); }
-.reno-grid i { position: absolute; left: 0; right: 0; top: 0; height: 320%; transform-origin: 50% 0; transform: rotateX(66deg); background-image: linear-gradient(rgba(255, 110, 50, 0.55) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255, 110, 50, 0.4) 1.5px, transparent 1.5px); background-size: 100% 46px, 70px 100%; }
-.reno-horizon { position: absolute; left: 0; right: 0; bottom: 47%; height: 2px; background: linear-gradient(90deg, transparent 4%, #ff5b1f 30%, #ffd9a8 50%, #ff5b1f 70%, transparent 96%); box-shadow: 0 0 46px 8px rgba(255, 91, 31, 0.4), 0 0 120px 30px rgba(255, 91, 31, 0.18); opacity: 0; transform: scaleX(0.2); transition: opacity 0.5s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.reno-intro:is([data-scene="future"], [data-scene="ignite"], [data-scene="jump"]) :is(.reno-grid, .reno-horizon) { opacity: 1; }
-.reno-intro:is([data-scene="future"], [data-scene="ignite"], [data-scene="jump"]) .reno-horizon { transform: none; }
+.reno-year-wrap { direction: ltr; opacity: 0; transition: opacity 0.7s ease; }
+.reno-intro:is([data-scene="wait"], [data-scene="count"], [data-scene="arrive"]) .reno-year-wrap { opacity: 1; }
+.reno-year { display: block; font-family: var(--font-mono, ui-monospace, monospace); font-size: clamp(17px, 3.2vh, 28px); font-weight: 500; letter-spacing: 0.44em; margin-inline-end: -0.44em; font-variant-numeric: tabular-nums; color: rgba(255, 201, 138, 0.7); transition: color 0.8s ease; }
+.reno-intro:is([data-scene="arrive"], [data-scene="reveal"]) .reno-year { color: #ffd9a8; }
 
-/* The year: poster-size numerals behind RENO. */
-.reno-hud { position: absolute; top: calc(var(--reno-lb) + 1.5vh); left: 0; right: 0; display: grid; justify-items: center; gap: 2px; pointer-events: none; direction: ltr; transition: opacity 0.3s ease; }
-.reno-hud-label { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255, 201, 138, 0.85); }
-html[dir="rtl"] .reno-hud-label { font-family: inherit; font-size: 13px; letter-spacing: 0; }
-.reno-year { font-family: var(--font-mono, ui-monospace, monospace); font-weight: 600; font-size: clamp(72px, 19vw, 200px); line-height: 0.95; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; color: transparent; -webkit-text-stroke: 1.5px rgba(255, 201, 138, 0.5); transition: color 0.4s ease, -webkit-text-stroke-color 0.4s ease, filter 0.2s ease, text-shadow 0.4s ease; }
-@media (min-aspect-ratio: 5/4) { .reno-year { font-size: clamp(56px, 24vh, 180px); } }
-.reno-intro[data-scene="tunnel"] .reno-year { -webkit-text-stroke-color: rgba(255, 138, 69, 0.95); filter: blur(1.2px); }
-.reno-intro:is([data-scene="arrive"], [data-scene="reveal"]) .reno-year { color: rgba(255, 255, 255, 0.05); -webkit-text-stroke-color: rgba(255, 201, 138, 0.6); }
-.reno-intro[data-scene="reveal"] :is(.reno-hud, .reno-status) { opacity: 0; transition: opacity 0.25s ease; }
+.reno-stage { position: relative; width: var(--reno-stage); height: var(--reno-stage); }
+.reno-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(255, 138, 69, 0.85); background: radial-gradient(circle, rgba(255, 138, 69, 0.16) 0%, rgba(255, 91, 31, 0.07) 48%, rgba(255, 91, 31, 0) 72%); box-shadow: 0 0 46px rgba(255, 91, 31, 0.28), inset 0 0 54px rgba(255, 91, 31, 0.16); opacity: 0; transform: scale(0.05); transition: transform 1.7s cubic-bezier(0.22, 0.8, 0.2, 1), opacity 0.6s ease; will-change: transform, opacity; }
+/* A slow arc of light travelling round the ring. */
+.reno-ring i { position: absolute; inset: -9px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(255, 201, 138, 0) 0 68%, rgba(255, 138, 69, 0.75) 90%, #ffe3c2 98%, rgba(255, 201, 138, 0) 100%); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); }
+.reno-intro:is([data-scene="count"], [data-scene="arrive"]) .reno-ring { opacity: 1; transform: none; }
+.reno-intro[data-scene="reveal"] .reno-ring { opacity: 0; transform: scale(1.06); transition: transform 0.8s ease, opacity 0.5s ease; }
 
-.reno-stage { position: relative; width: var(--reno-stage); aspect-ratio: 1; display: grid; place-items: center; }
-html[dir="ltr"] .reno-intro:is([data-scene="arrive"], [data-scene="reveal"]) .reno-stage { transform: translate(calc(-1 * var(--reno-shift-x)), var(--reno-shift-y)); }
-html[dir="rtl"] .reno-intro:is([data-scene="arrive"], [data-scene="reveal"]) .reno-stage { transform: translate(var(--reno-shift-x), var(--reno-shift-y)); }
+.reno-spark { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #ffd9a8; box-shadow: 0 0 18px 6px rgba(255, 91, 31, 0.7), 0 0 60px 18px rgba(255, 91, 31, 0.25); opacity: 0; transition: opacity 0.5s ease, transform 1s ease; }
+.reno-intro[data-scene="wait"] .reno-spark { opacity: 1; }
+.reno-intro[data-scene="count"] .reno-spark { opacity: 0; transform: scale(3); transition: opacity 0.9s ease, transform 0.9s ease; }
 
-/* Portal */
-.reno-portal { position: absolute; inset: 6%; border-radius: 50%; opacity: 0; transform: scale(0.55); transition: transform 0.7s cubic-bezier(0.2, 1.3, 0.3, 1), opacity 0.35s ease; }
-.reno-portal svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); }
-.reno-portal .reno-ring-draw { stroke-dasharray: 100; stroke-dashoffset: 0; stroke-linecap: round; }
-.reno-portal .reno-core { position: absolute; inset: 8%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 201, 138, 0.2) 0%, rgba(255, 91, 31, 0.12) 40%, transparent 70%), conic-gradient(from 0deg, rgba(255, 91, 31, 0), rgba(255, 91, 31, 0.6), rgba(255, 201, 138, 0.4), rgba(255, 91, 31, 0), rgba(255, 91, 31, 0.5), rgba(255, 91, 31, 0)); filter: blur(9px); -webkit-mask: radial-gradient(circle, #000 0%, #000 62%, transparent 74%); mask: radial-gradient(circle, #000 0%, #000 62%, transparent 74%); }
-.reno-intro:is([data-scene="ignite"], [data-scene="jump"]) .reno-portal { opacity: 1; transform: scale(1); }
-.reno-intro[data-scene="jump"] .reno-portal { transform: scale(1.07); transition-duration: 0.4s; }
-.reno-intro[data-scene="tunnel"] .reno-portal { opacity: 0; transform: scale(4.4); transition: transform 0.6s cubic-bezier(0.6, 0, 0.9, 0.4), opacity 0.6s ease-in; }
+.reno-hero { position: absolute; width: 62%; left: 19%; bottom: 2%; opacity: 0; transform: translateY(5%) scale(0.95); transition: opacity 0.9s ease, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform, opacity; }
+.reno-hero .reno-art { width: 100%; height: auto; }
+.reno-intro[data-scene="arrive"] .reno-hero { opacity: 1; transform: none; }
+.reno-intro[data-scene="reveal"] .reno-hero { opacity: 0; transition: transform 0.85s cubic-bezier(0.6, 0, 0.2, 1), opacity 0.2s ease 0.66s; }
+/* While he is fading in or gliding, the drawing itself holds still (one cached layer). */
+.reno-intro:not([data-scene="arrive"]) .reno-art *, .reno-intro .reno-art :is(.r-antenna, .r-body, .r-steam path, .r-arm-tea, .r-cups ellipse, .r-antenna circle) { animation: none !important; }
 
-/* Time tunnel: rings rushing past the camera. */
-.reno-tunnel { position: absolute; inset: -65%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
-.reno-tunnel i { position: absolute; inset: 0; border-radius: 50%; border: 4px solid rgba(255, 138, 69, 0.95); box-shadow: 0 0 18px rgba(255, 91, 31, 0.6), inset 0 0 18px rgba(255, 91, 31, 0.3); transform: scale(0.02); opacity: 0; }
-.reno-tunnel i:nth-child(even) { border: 3px dashed rgba(255, 217, 168, 0.85); box-shadow: none; }
-.reno-tunnel b { position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255, 217, 168, 0) 0deg 5deg, rgba(255, 217, 168, 0.26) 5deg 5.7deg); -webkit-mask: radial-gradient(circle, transparent 10%, #000 36%, transparent 72%); mask: radial-gradient(circle, transparent 10%, #000 36%, transparent 72%); }
-.reno-intro[data-scene="tunnel"] .reno-tunnel { opacity: 1; }
+.reno-title { display: grid; justify-items: center; gap: clamp(4px, 1vh, 10px); text-align: center; max-width: calc(100vw - 32px); }
+.reno-title > span { opacity: 0; transform: translateY(8px); transition: opacity 0.7s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.reno-intro[data-scene="arrive"] .reno-title > span { opacity: 1; transform: none; }
+.reno-intro[data-scene="arrive"] .reno-title-brand { transition-delay: 0.45s; }
+.reno-intro[data-scene="arrive"] .reno-title-name { transition-delay: 0.6s; }
+.reno-intro[data-scene="arrive"] .reno-title-sub { transition-delay: 0.85s; }
+.reno-intro[data-scene="reveal"] .reno-title > span { transition: opacity 0.3s ease; }
+.reno-title-brand { font-family: var(--font-mono, ui-monospace, monospace); font-size: clamp(10px, 1.6vh, 12px); letter-spacing: 0.4em; margin-inline-end: -0.4em; text-transform: uppercase; color: #ffc98a; }
+.reno-title-name { font-weight: 600; font-size: clamp(38px, 9vh, 84px); line-height: 1; letter-spacing: -0.01em; color: #fff; }
+.reno-title-sub { font-size: clamp(13px, 2.2vh, 17px); color: rgba(235, 235, 235, 0.72); }
+html[dir="rtl"] .reno-title-brand { font-family: inherit; font-size: clamp(13px, 2.2vh, 17px); letter-spacing: 0; margin-inline-end: 0; text-transform: none; }
+html[dir="rtl"] .reno-title-name { letter-spacing: 0; line-height: 1.3; }
 
-/* Flash + landing shockwave */
-.reno-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 50%, #fff 0%, #ffe3c2 22%, rgba(255, 110, 50, 0.7) 52%, rgba(255, 91, 31, 0) 82%); }
-.reno-shock { position: absolute; left: 50%; bottom: 3%; width: 62%; aspect-ratio: 3.4; margin-left: -31%; border-radius: 50%; border: 2px solid #ffd9a8; box-shadow: 0 0 26px rgba(255, 91, 31, 0.9), inset 0 0 20px rgba(255, 91, 31, 0.55); opacity: 0; }
+/* No skip button on screen. Esc ends the intro; this one appears only for keyboard users. */
+.reno-skip { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); inset-inline-end: max(18px, env(safe-area-inset-right, 0px)); padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(11, 14, 23, 0.7); color: #fff; font: inherit; font-size: 13px; cursor: pointer; opacity: 0; pointer-events: none; }
+.reno-skip:focus-visible { opacity: 1; pointer-events: auto; }
 
-/* RENO */
-.reno-hero { position: absolute; width: var(--reno-hero-w); left: calc((100% - var(--reno-hero-w)) / 2); bottom: 4%; z-index: 2; transition: transform 0.72s cubic-bezier(0.6, 0, 0.3, 1), opacity 0.22s ease 0.5s; }
-.reno-hero-fx { transform-origin: 50% 100%; }
-.reno-hero .reno-art { width: 100%; height: auto; filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.45)); transition: filter 0.4s ease; }
-.reno-intro:is([data-scene="ignite"], [data-scene="jump"]) .reno-hero .reno-art { filter: drop-shadow(0 0 20px rgba(255, 91, 31, 0.55)) drop-shadow(0 20px 30px rgba(0, 0, 0, 0.45)); }
-.reno-intro[data-scene="out"] .reno-hero-fx { opacity: 0; }
-.reno-intro:is([data-scene="jump"], [data-scene="tunnel"]) .reno-art > ellipse { opacity: 0; }
-.reno-intro[data-scene="reveal"] .reno-hero { opacity: 0; }
-.reno-hero.reno-tuning .cup-ring { stroke-width: 7px; }
-
-/* Name card */
-.reno-title { position: absolute; z-index: 3; display: grid; gap: 10px; justify-items: center; text-align: center; left: 16px; right: 16px; bottom: calc(var(--reno-lb) + 62px); opacity: 0; visibility: hidden; pointer-events: none; }
-.reno-intro[data-scene="arrive"] .reno-title { opacity: 1; visibility: visible; }
-.reno-intro[data-scene="reveal"] .reno-title { opacity: 0; visibility: visible; transition: opacity 0.2s ease; }
-.reno-title-brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase; color: #ffc98a; }
-.reno-title-brand::before { content: ""; width: 26px; height: 2px; background: #ff5b1f; }
-.reno-title-name { position: relative; display: inline-block; padding-bottom: 0.1em; font-weight: 700; font-size: clamp(52px, 15vw, 132px); line-height: 0.92; letter-spacing: -0.02em; color: #fff; text-shadow: 0 0 40px rgba(255, 91, 31, 0.35); overflow: hidden; }
-.reno-title-name > span { display: inline-block; }
-.reno-title-name::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 0.055em; min-height: 3px; border-radius: 99px; background: linear-gradient(90deg, #ff5b1f, #ffc98a); transform-origin: left; }
-html[dir="rtl"] .reno-title-name::after { transform-origin: right; }
-.reno-title-sub { font-size: clamp(13px, 1.9vw, 17px); color: rgba(235, 235, 235, 0.82); max-width: 34ch; }
-html[dir="rtl"] .reno-title-brand { font-family: inherit; font-size: 17px; letter-spacing: 0; text-transform: none; }
-html[dir="rtl"] .reno-title-name { letter-spacing: 0; line-height: 1.25; padding-bottom: 0.16em; font-size: clamp(64px, 19vw, 150px); }
-@media (min-aspect-ratio: 5/4) {
-  .reno-title { justify-items: start; text-align: start; top: 56%; bottom: auto; transform: translateY(-50%); width: auto; max-width: calc(50vw + min(60px, 4vw) - 32px); }
-  html[dir="ltr"] .reno-title { left: calc(50% - min(60px, 4vw)); right: auto; }
-  html[dir="rtl"] .reno-title { right: calc(50% - min(60px, 4vw)); left: auto; }
-  .reno-title-name, html[dir="rtl"] .reno-title-name { font-size: clamp(52px, min(11vw, 26vh), 148px); }
-}
-/* Short landscape screens (phones on their side): the name card takes over from the year. */
-@media (min-aspect-ratio: 5/4) and (max-height: 560px) {
-  .reno-title { top: 50%; gap: 6px; }
-  .reno-intro:is([data-scene="arrive"], [data-scene="reveal"]) .reno-hud { opacity: 0; }
-}
-
-/* Bottom status: 2186 ──── 2026 */
-.reno-status { position: absolute; left: 0; right: 0; bottom: calc(var(--reno-lb) + 12px); display: grid; justify-items: center; gap: 8px; pointer-events: none; transition: opacity 0.3s ease; }
-.reno-route { display: flex; gap: 12px; align-items: center; direction: ltr; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; letter-spacing: 0.16em; color: rgba(255, 201, 138, 0.9); }
-.reno-bar { width: min(240px, 46vw); height: 2px; background: rgba(255, 255, 255, 0.16); position: relative; overflow: hidden; border-radius: 99px; }
-.reno-bar i { position: absolute; inset: 0; background: linear-gradient(90deg, #ff5b1f, #ffc98a); transform-origin: left; transform: scaleX(0); transition: transform 1.4s cubic-bezier(0.5, 0, 0.5, 1); }
-.reno-intro:is([data-scene="tunnel"], [data-scene="arrive"], [data-scene="reveal"]) .reno-bar i { transform: scaleX(1); }
-.reno-caption { margin: 0; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(230, 230, 230, 0.72); text-align: center; max-width: calc(100vw - 32px); }
-html[dir="rtl"] .reno-caption { letter-spacing: 0; font-size: 14px; }
-
-/* Cinema bars + skip */
-.reno-letterbox::before, .reno-letterbox::after { content: ""; position: absolute; left: 0; right: 0; height: var(--reno-lb); background: #000; z-index: 4; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.reno-letterbox::before { top: 0; transform: translateY(-100%); }
-.reno-letterbox::after { bottom: 0; transform: translateY(100%); }
-.reno-intro:not([data-scene="out"], [data-scene="reveal"]) .reno-letterbox::before, .reno-intro:not([data-scene="out"], [data-scene="reveal"]) .reno-letterbox::after { transform: none; }
-.reno-skip { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); inset-inline-end: max(18px, env(safe-area-inset-right, 0px)); padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.28); background: rgba(11, 14, 23, 0.6); color: #fff; font: inherit; font-size: 13px; cursor: pointer; z-index: 5; }
-.reno-skip:hover { border-color: #ff5b1f; }
-
-/* Reduced motion: a still arrival, no travel. */
-.reno-intro[data-reduced="true"], .reno-intro[data-reduced="true"] *, .reno-intro[data-reduced="true"] *::before, .reno-intro[data-reduced="true"] *::after { transition-duration: 0.01ms !important; animation: none !important; }
-.reno-intro[data-reduced="true"] .reno-portal { opacity: 0.9; transform: scale(0.94); }
+/* Reduced motion: a still arrival. */
+.reno-intro[data-reduced="true"], .reno-intro[data-reduced="true"] *, .reno-intro[data-reduced="true"] *::before, .reno-intro[data-reduced="true"] *::after { transition-duration: 0.01ms !important; transition-delay: 0s !important; animation: none !important; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .reno-sky { animation: reno-sky-drift 16s linear infinite; }
-  .reno-grid i { animation: reno-grid-run 0.9s linear infinite; }
-  .reno-ring-a { transform-origin: 50% 50%; animation: reno-spin 14s linear infinite; }
-  .reno-ring-b { transform-origin: 50% 50%; animation: reno-spin 9s linear infinite reverse; }
-  .reno-portal .reno-core { animation: reno-spin 5s linear infinite; }
-  .reno-intro[data-scene="ignite"] .reno-ring-draw { animation: reno-ring-draw 0.75s cubic-bezier(0.5, 0, 0.2, 1) both; }
-  .reno-intro[data-scene="ignite"] .reno-core { animation: reno-spin 5s linear infinite, reno-fade-in 0.7s ease 0.35s both; }
-  .reno-intro:is([data-scene="arrive"], [data-scene="reveal"]) .reno-portal { animation: reno-portal-close 1.25s cubic-bezier(0.5, 0, 0.3, 1) both; }
-  .reno-intro[data-scene="tunnel"] .reno-tunnel i { animation: reno-ring-rush 1.12s cubic-bezier(0.55, 0, 0.9, 0.55) infinite; }
-  .reno-intro[data-scene="tunnel"] .reno-tunnel b { animation: reno-streaks 1.4s ease-in both; }
-  .reno-intro[data-scene="tunnel"] .reno-flash { animation: reno-flash-a 0.5s ease-out both; }
-  .reno-intro[data-scene="arrive"] .reno-flash { animation: reno-flash-b 0.75s ease-out both; }
-  .reno-intro[data-scene="arrive"] .reno-shock { animation: reno-shock 0.8s cubic-bezier(0.1, 0.7, 0.3, 1) 0.33s both; }
-  .reno-intro[data-scene="arrive"] .reno-year { animation: reno-year-punch 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
-  .reno-hero.reno-tuning .cup-ring { animation: reno-pulse 0.2s ease-in-out 6 alternate; }
-  .reno-intro[data-scene="future"] .reno-hero-fx { animation: reno-h-enter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  .reno-intro[data-scene="jump"] .reno-hero-fx { animation: reno-h-jump 0.5s linear both; }
-  .reno-intro[data-scene="tunnel"] .reno-hero-fx { transform-origin: 50% 46%; animation: reno-h-fly 1.4s cubic-bezier(0.3, 0, 0.6, 1) both; }
-  .reno-intro[data-scene="arrive"] .reno-hero-fx { animation: reno-h-land 0.9s linear both; }
-  .reno-intro[data-scene="arrive"] .reno-title-brand { animation: reno-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s both; }
-  .reno-intro[data-scene="arrive"] .reno-title-name > span { animation: reno-letter 0.55s cubic-bezier(0.2, 1.1, 0.3, 1) 0.45s both; }
-  html[dir="rtl"] .reno-intro[data-scene="arrive"] .reno-title-name { animation: reno-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s both; }
-  .reno-intro[data-scene="arrive"] .reno-title-name::after { animation: reno-underline 0.6s cubic-bezier(0.5, 0, 0.2, 1) 0.8s both; }
-  .reno-intro[data-scene="arrive"] .reno-title-sub { animation: reno-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.95s both; }
+  .reno-intro:is([data-scene="count"], [data-scene="arrive"]) .reno-ring i { animation: reno-spin 7s linear infinite; }
+  .reno-intro[data-scene="wait"] .reno-spark { animation: reno-breathe-spark 1.6s ease-in-out infinite; }
 }
 @keyframes reno-spin { to { transform: rotate(360deg); } }
-@keyframes reno-fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes reno-sky-drift { to { transform: translate(-300px, -240px); } }
-@keyframes reno-grid-run { from { transform: rotateX(66deg) translateY(0); } to { transform: rotateX(66deg) translateY(46px); } }
-@keyframes reno-ring-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-@keyframes reno-portal-close { 0% { opacity: 1; transform: scale(1.04); } 45% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0); } }
-@keyframes reno-ring-rush { 0% { transform: scale(0.02); opacity: 0; } 18% { opacity: 1; } 100% { transform: scale(1.2); opacity: 0; } }
-@keyframes reno-streaks { from { transform: scale(0.5) rotate(0deg); opacity: 0; } 25% { opacity: 1; } to { transform: scale(1.5) rotate(40deg); opacity: 0.9; } }
-@keyframes reno-flash-a { from { opacity: 0.75; } to { opacity: 0; } }
-@keyframes reno-flash-b { from { opacity: 0.95; } to { opacity: 0; } }
-@keyframes reno-shock { 0% { transform: scale(0.15); opacity: 0; } 15% { opacity: 0.95; } 100% { transform: scale(1.9); opacity: 0; } }
-@keyframes reno-year-punch { from { transform: scale(1.18); } to { transform: none; } }
-@keyframes reno-h-enter { from { opacity: 0; transform: translateY(5%); } to { opacity: 1; transform: none; } }
-@keyframes reno-h-jump {
-  0% { transform: none; opacity: 1; animation-timing-function: cubic-bezier(0.2, 0.8, 0.4, 1); }
-  30% { transform: scale(1.08, 0.86); opacity: 1; animation-timing-function: cubic-bezier(0.3, 0, 0.7, 0.3); }
-  58% { transform: translateY(-14%) scale(0.94, 1.1); opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 0.9, 0.6); }
-  100% { transform: translateY(-52%) scale(0.03); opacity: 0; }
-}
-@keyframes reno-h-fly {
-  0% { transform: translateY(-4%) scale(0.06) rotate(-18deg); opacity: 0; }
-  14% { opacity: 1; }
-  100% { transform: translateY(-4%) scale(0.86) rotate(5deg); opacity: 1; }
-}
-@keyframes reno-h-land {
-  0% { transform: translateY(-75%) scale(0.92, 1.12); opacity: 0; animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
-  10% { opacity: 1; }
-  38% { transform: translateY(0) scale(1.1, 0.88); opacity: 1; animation-timing-function: cubic-bezier(0.2, 0.8, 0.4, 1); }
-  60% { transform: translateY(-3.5%) scale(0.97, 1.04); animation-timing-function: cubic-bezier(0.5, 0, 0.6, 1); }
-  80% { transform: translateY(0) scale(1.02, 0.985); }
-  100% { transform: none; opacity: 1; }
-}
-@keyframes reno-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-@keyframes reno-letter { from { opacity: 0; transform: translateY(70%) rotate(6deg); } to { opacity: 1; transform: none; } }
-@keyframes reno-underline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes reno-breathe-spark { 0%, 100% { transform: scale(0.85); } 50% { transform: scale(1.25); } }

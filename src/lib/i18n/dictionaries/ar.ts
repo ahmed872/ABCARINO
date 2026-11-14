@@ -295,9 +295,6 @@ const ar: Dictionary = {
     intro: {
       label: "رينو جاي من المستقبل",
       skip: "تخطّي المقدمة",
-      year: "سنة",
-      departing: "البوابة بتفتح",
-      warping: "السفر عبر الزمن",
       arrived: "وصلنا 2026",
     },
     page: {

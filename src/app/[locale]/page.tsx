@@ -105,7 +105,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="lg:col-span-3">
               <Eyebrow>{h.statementEyebrow}</Eyebrow>
             </div>
-            <p className="display-3 text-balance text-ink lg:col-span-9 lg:text-[clamp(2rem,1.2rem+2vw,3.4rem)] lg:leading-[1.1]">
+            <p className="display-3 text-balance text-ink lg:col-span-9 lg:text-[clamp(2rem,1.2rem+2vw,3.4rem)] lg:leading-[1.1] rtl:lg:leading-[1.55]">
               {tr(locale, p.statementEn, p.statementAr)}
             </p>
           </div>

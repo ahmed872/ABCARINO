@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { RENO_CATEGORIES, RENO_FAQ, type RenoAction, type RenoFaq, type RenoLocale } from "@/content/reno/faq";
 import { RENO_CONFIG, prefersReducedMotion, readSession, writeSession } from "@/lib/reno/config";
+import { RENO_LIVE_CATEGORIES } from "@/lib/reno/knowledge";
 import { faqById, matchQuestion } from "@/lib/reno/matcher";
 import type { Dictionary } from "@/lib/i18n";
+import { NO_KNOWLEDGE, loadKnowledge, type LiveKnowledge } from "./knowledge-client";
 import { RenoArt, type RenoMood } from "./RenoArt";
 
 type Copy = Dictionary["reno"];
@@ -20,7 +22,7 @@ export type RenoMessage =
 
 const GREETING: RenoMessage[] = [{ id: 1, from: "reno", kind: "greeting" }];
 
-const isId = (v: unknown) => typeof v === "string" && v.length < 60;
+const isId = (v: unknown) => typeof v === "string" && v.length < 120;
 const isIdList = (v: unknown) => Array.isArray(v) && v.length <= 5 && v.every(isId);
 
 /** Session data can be stale or tampered with: keep only well-formed messages. */
@@ -88,6 +90,18 @@ export function RenoPanel({
   const timers = useRef<number[]>([]);
   const nextId = useRef(Math.max(0, ...messages.map((m) => m.id)) + 1);
 
+  // The built-in FAQ answers at once; the site's live catalogue and contact details join it when they arrive.
+  const [live, setLive] = useState<LiveKnowledge>(NO_KNOWLEDGE);
+  useEffect(() => {
+    let on = true;
+    void loadKnowledge(locale).then((k) => on && setLive(k));
+    return () => {
+      on = false;
+    };
+  }, [locale]);
+  const faq = useMemo(() => (live.faq.length ? [...RENO_FAQ, ...live.faq] : RENO_FAQ), [live]);
+  const categories = useMemo(() => [...RENO_CATEGORIES, ...RENO_LIVE_CATEGORIES].filter((c) => faq.some((f) => f.category === c.id && !f.hidden)), [faq]);
+
   useEffect(() => {
     writeSession(`${RENO_CONFIG.storage.chat}:${locale}`, JSON.stringify(messages));
     const log = logRef.current;
@@ -116,8 +130,8 @@ export function RenoPanel({
     onMood("sip");
     const delay = prefersReducedMotion() ? 120 : RENO_CONFIG.companion.replyDelayMs;
     later(() => {
-      const forced = forcedId ? faqById(RENO_FAQ, forcedId) : undefined;
-      const result = forced ? ({ kind: "answer", entry: forced, suggestions: [] } as const) : matchQuestion(userText, RENO_FAQ);
+      const forced = forcedId ? faqById(faq, forcedId) : undefined;
+      const result = forced ? ({ kind: "answer", entry: forced, suggestions: [] } as const) : matchQuestion(userText, faq);
       let reply: RenoMessage;
       if (result.kind === "answer") {
         const related = (result.entry.related ?? []).filter((r) => r !== result.entry.id);
@@ -199,7 +213,7 @@ export function RenoPanel({
     );
 
   const chips = (ids: string[]) => {
-    const entries = ids.map((i) => faqById(RENO_FAQ, i)).filter((e): e is RenoFaq => !!e && !e.hidden);
+    const entries = ids.map((i) => faqById(faq, i)).filter((e): e is RenoFaq => !!e && !e.hidden);
     if (!entries.length) return null;
     return (
       <div className="reno-chips">
@@ -212,7 +226,10 @@ export function RenoPanel({
     );
   };
 
-  const topicEntries = RENO_FAQ.filter((f) => f.category === category && !f.hidden);
+  const topicEntries = faq.filter((f) => f.category === category && !f.hidden);
+  /** Live details from the site (status, what's included, contact details) for a hand-written answer. */
+  const factFor = (entry: RenoFaq) =>
+    entry.id.includes(":") ? undefined : ((entry.action?.type === "link" ? live.facts[entry.action.href] : undefined) ?? live.facts[`#${entry.id}`]);
 
   return (
     <section id={id} ref={panelRef} tabIndex={-1} className="reno-panel" role="dialog" aria-modal="false" aria-label={t.panelLabel}>
@@ -255,12 +272,14 @@ export function RenoPanel({
             );
           }
           if (m.kind === "answer") {
-            const entry = faqById(RENO_FAQ, m.faqId);
+            const entry = faqById(faq, m.faqId);
             if (!entry) return null;
+            const fact = factFor(entry);
             return (
               <div key={m.id} className="reno-msg" data-from="reno" data-faq={entry.id}>
                 {m.quip ? <span className="reno-quip">{m.quip}</span> : null}
                 <p>{entry.answers[locale]}</p>
+                {fact ? <p className="reno-facts">{fact}</p> : null}
                 {entry.action ? <div className="reno-actions">{actionLink(entry.action)}</div> : null}
                 {m.suggestionIds.length ? (
                   <div style={{ marginTop: 12 }}>
@@ -299,7 +318,7 @@ export function RenoPanel({
           <div>
             <p className="reno-label">{t.suggested}</p>
             <div className="reno-tabs" role="group" aria-label={t.suggested}>
-              {RENO_CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <button key={c.id} type="button" className="reno-chip" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}>
                   {c.label[locale]}
                 </button>
