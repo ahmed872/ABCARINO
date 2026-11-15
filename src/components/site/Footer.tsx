@@ -139,7 +139,12 @@ export function Footer({ locale, t, settings }: { locale: Locale; t: Dictionary;
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-4 border-t border-paper/10 pt-8 text-xs text-paper/45 md:flex-row md:items-center md:justify-between">
+        {/* The last row shares the page corners with fixed controls. RENO is anchored to the physical
+            right in both directions (reno.css), so that side is reserved physically, not logically;
+            below lg the WhatsApp button takes the inline-end corner too. */}
+        <div
+          className={`mt-6 flex flex-col gap-4 border-t border-paper/10 pr-24 pt-8 text-xs text-paper/45 md:flex-row md:items-center md:justify-between${wa ? " max-lg:pe-24" : ""}`}
+        >
           <p>
             © {year} {tr(locale, settings.general.companyNameEn, settings.general.companyNameAr)}. {t.footer.rights}
             {tr(locale, settings.footer.legalEn, settings.footer.legalAr) ? (
