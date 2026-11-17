@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { databasePoolSize } from "./pool-size";
 import * as schema from "./schema";
 
 /**
@@ -30,8 +31,7 @@ function createClient() {
 
 function connect(url: string, pooled: boolean) {
   return postgres(url, {
-    // Serverless instances each hold their own pool: keep it small there.
-    max: Number(process.env.DATABASE_POOL_SIZE ?? (process.env.VERCEL ? 3 : 10)),
+    max: databasePoolSize(process.env.DATABASE_POOL_SIZE, !!process.env.VERCEL),
     prepare: !pooled,
     idle_timeout: 30,
     connect_timeout: 10,
